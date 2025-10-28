@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "337431716255",
+    "project_id": "rentmanagement-91f4d",
+    "storage_bucket": "rentmanagement-91f4d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:337431716255:android:7996fca3fd5dd3bfe55daa",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBy-llhsMurJzZOxjIL9ioB2nYi66bU6yo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
