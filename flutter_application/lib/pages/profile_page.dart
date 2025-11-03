@@ -6,13 +6,17 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid;
+
     return Scaffold(
       appBar: AppBar(title: const Text("Profile")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("Welcome! You are logged in."),
+            Text("Welcome! You are logged in. $uid"),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
-
+import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -9,18 +11,48 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final providers = [EmailAuthProvider()];
 
+
     void onSignedIn() {
       Navigator.pushReplacementNamed(context, '/profile');
+    }
+
+    void onRegister(){
+      Navigator.pushReplacementNamed(context, '/register');
+    }
+
+    Future<void> handleAuthState(BuildContext context, User user) async {
+      try {
+          final url = Uri.parse('http://127.0.0.1:5000/auth/check/${user.uid}');
+          final response = await http.get(url);
+
+          final data = jsonDecode(response.body);
+          bool exists = data['exists'] ?? false;
+
+          if (exists) {
+            onSignedIn();     
+          } else {
+            onRegister();
+          }
+
+        } catch (e) {
+          debugPrint('Error checking user: $e');
+        }
     }
 
     return SignInScreen(
       providers: providers,
       actions: [
         AuthStateChangeAction<UserCreated>((context, state) {
-          onSignedIn();
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            handleAuthState(context, user);
+          }
         }),
         AuthStateChangeAction<SignedIn>((context, state) {
-          onSignedIn();
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            handleAuthState(context, user);
+          }
         }),
       ],
     );
