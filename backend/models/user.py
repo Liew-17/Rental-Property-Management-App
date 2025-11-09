@@ -1,10 +1,19 @@
 from database import db
 
 class User(db.Model):
+    __tablename__ = "users"
+
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.String(80), nullable=False)
     username = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(20), default="user")
+
+    properties = db.relationship(
+        "Property",
+        backref="user",         # allows accessing user from property.user
+        lazy=True,
+        cascade="all, delete-orphan"
+    ) 
 
     @classmethod
     def create(cls, uid, username, role="user"):

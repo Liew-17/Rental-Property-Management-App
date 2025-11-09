@@ -2,6 +2,7 @@ from flask import Flask
 from database import db, init_db
 from models.user import User
 from routes.auth_route import auth_bp
+from routes.property_route import property_bp
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -23,6 +24,7 @@ def test():
     return f"This is a test response from Flask! You have call this API {counter} time"
 
 app.register_blueprint(auth_bp, url_prefix="/auth")
+app.register_blueprint(property_bp, url_prefix="/property")
 
 if __name__ == "__main__":
     app.run(debug=True)

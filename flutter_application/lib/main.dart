@@ -4,7 +4,7 @@ import 'firebase_options.dart';
 import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/register_page.dart';
-
+import 'pages/main_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -25,10 +25,11 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const LoginPage(),
+        '/': (context) => const MainPage(),
         '/profile': (context) => const ProfilePage(),
         '/register': (context) => const RegisterPage(),
       },
+      debugShowCheckedModeBanner: false,
     );
   }
 }

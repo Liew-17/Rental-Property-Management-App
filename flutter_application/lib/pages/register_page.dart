@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_application/services/api_service.dart';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -22,7 +23,8 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _registerUser() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser; // get current login user
+
     if (user == null) {    
       return;
     }
@@ -35,7 +37,7 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      final url = Uri.parse('http://127.0.0.1:5000/auth/register'); 
+      final url = ApiService.buildUri("/auth/register");
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
