@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_application/pages/search_page.dart'; 
 import 'firebase_options.dart'; 
 import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const MainPage(),
         '/profile': (context) => const ProfilePage(),
         '/register': (context) => const RegisterPage(),
+        '/search': (context) => const SearchPage(),
       },
       debugShowCheckedModeBanner: false,
     );
