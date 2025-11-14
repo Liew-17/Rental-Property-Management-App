@@ -13,3 +13,6 @@ env/
 # 🔹 Environment variable files
 .env
 
+# Ignore uploaded files
+/uploads/
+

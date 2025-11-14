@@ -14,45 +14,48 @@ class ResidenceCard extends StatelessWidget {
     this.onFavoriteToggle,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final cardWidth = MediaQuery.of(context).size.width * 0.8;
-    final cardHeight = cardWidth * 0.8;
+ @override
+Widget build(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final cardWidth = screenWidth * 0.9;
+  final cardHeight = (cardWidth * 0.7).clamp(350.0, 800.0); // remain within a suitable height
 
-    return GestureDetector(
-      onTap: () => onTap(residence.id),
-      child: SizedBox(
-        width: cardWidth,
-        height: cardHeight,
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 4,
-          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: Column(
-            children: [
-              // Image section
-              Stack(
+  return GestureDetector(
+    onTap: () => onTap(residence.id),
+    child: SizedBox(
+      width: cardWidth,
+      height: cardHeight,
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 4,
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        clipBehavior: Clip.hardEdge,
+        child: Column(
+          children: [
+            // Image section
+            SizedBox(
+              height: cardHeight * 0.6,
+              width: double.infinity,
+              child: Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                    ),
-                    child: SizedBox(
-                      height: cardHeight * 0.6,
-                      width: double.infinity,
-                      child: residence.imageUrl != null
-                          ? Image.network(
-                              residence.imageUrl!,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              color: Colors.grey[300],
-                              child: const Placeholder(),
-                            ),
-                    ),
+                  Positioned.fill(
+                    child: residence.imageUrl != null
+                        ? Image.network(
+                            residence.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: Colors.grey[300],
+                                  child: const Center(
+                                      child: Icon(Icons.image)),
+                                ),
+                          )
+                        : Container(
+                            color: Colors.grey[300],
+                            child: const Center(child: Icon(Icons.image)),
+                          ),
                   ),
                   // Favorite button
                   Positioned(
@@ -78,64 +81,64 @@ class ResidenceCard extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
 
-              // Text section 
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        residence.title,
-                        style: AppTheme.heading1.copyWith(fontSize: 18),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
+            // Text section
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Title
+                    Text(
+                      residence.title,
+                      style: AppTheme.heading1.copyWith(fontSize: 18),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 10),
 
-                      // Beds, Baths, Area row
-                      Row(
-                        children: [
-                          Icon(Icons.bed, size: 16, color: AppTheme.primaryColor),
-                          const SizedBox(width: 4),
-                          Text('${residence.numBeds}'),
-                          const SizedBox(width: 12),
-                          Icon(Icons.bathtub, size: 16, color: AppTheme.primaryColor),
-                          const SizedBox(width: 4),
-                          Text('${residence.numBaths}'),
-                          const SizedBox(width: 12),
-                          Icon(Icons.square_foot, size: 16, color: AppTheme.primaryColor),
-                          const SizedBox(width: 4),
-                          Text('${residence.area} sqft'),
-                        ],
-                      ),
+                    // Beds, Baths, Area row
+                    Row(
+                      children: [
+                        Icon(Icons.bed, size: 14, color: AppTheme.primaryColor),
+                        const SizedBox(width: 4),
+                        Text('${residence.numBeds}'),
+                        const SizedBox(width: 10),
+                        Icon(Icons.bathtub, size: 14, color: AppTheme.primaryColor),
+                        const SizedBox(width: 4),
+                        Text('${residence.numBaths}'),
+                        const SizedBox(width: 10),
+                        Icon(Icons.square_foot, size: 14, color: AppTheme.primaryColor),
+                        const SizedBox(width: 4),
+                        Text('${residence.area} sqft'),
+                      ],
+                    ),
+                    const SizedBox(height: 15), 
 
-                      const Spacer(), // push price to bottom
-
-                      // Price row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            '\$${residence.price.toStringAsFixed(0)}',
-                            style: AppTheme.heading1.copyWith(
-                              fontSize: 16,
-                              color: AppTheme.primaryColor,
-                            ),
+                    // Price row at bottom-right
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          '\$${residence.price.toStringAsFixed(0)}',
+                          style: AppTheme.heading1.copyWith(
+                            fontSize: 16,
+                            color: AppTheme.primaryColor,
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

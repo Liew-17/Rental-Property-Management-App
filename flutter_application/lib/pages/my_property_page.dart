@@ -32,7 +32,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppTheme.primaryColor,
         onPressed: () {
-          debugPrint("Add new property tapped!"); //To Add Property Page
+          Navigator.pushNamed(context, '/add'); //To Add Property Page
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),

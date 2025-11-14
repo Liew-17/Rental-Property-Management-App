@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_application/pages/login_page.dart';
 import 'package:flutter_application/pages/search_page.dart'; 
 import 'firebase_options.dart'; 
-import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/register_page.dart';
 import 'pages/main_page.dart';
+import 'pages/add_property_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -24,12 +25,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      initialRoute: '/',
+      initialRoute: '/login',
       routes: {
         '/': (context) => const MainPage(),
+        '/login': (context) => const LoginPage(),
         '/profile': (context) => const ProfilePage(),
         '/register': (context) => const RegisterPage(),
         '/search': (context) => const SearchPage(),
+        '/add': (context) => const AddPropertyPage(),
       },
       debugShowCheckedModeBanner: false,
     );

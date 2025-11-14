@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/services/api_service.dart';
 import '../theme.dart';
 import '../models/residence_summary.dart';
+import 'package:galleryimage/galleryimage.dart';
 
 class PropertyDetailPage extends StatefulWidget {
   final ResidenceSummary residence;
@@ -15,6 +17,14 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  List<String> listOfUrls= [  'https://picsum.photos/id/1015/300/200',
+   ApiService.buildImageUrl("/uploads/properties/23/03500ec9-d916-45c1-8147-df19fcf3c475.png"),
+  'https://picsum.photos/id/1016/300/200',
+  'https://picsum.photos/id/1020/300/200',
+  'https://picsum.photos/id/1024/300/200',
+  'https://picsum.photos/id/1025/300/200',
+    ]; //place holder       
+                            
   @override
   void initState() {
     super.initState();
@@ -90,7 +100,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                     children: [
                       // Title
                       Text(
-                        '${residence.title}', // TODO: Replace with actual title
+                        residence.title, // TODO: Replace with actual title
                         style: AppTheme.heading1.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 8),
@@ -102,7 +112,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              '${residence.title}', // TODO: Replace with address
+                              residence.title, // TODO: Replace with address
                               style: const TextStyle(color: Colors.black54),
                             ),
                           ),
@@ -115,7 +125,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                         children: [
                           Icon(Icons.star, color: AppTheme.primaryColor, size: 18),
                           const SizedBox(width: 4),
-                          Text('${residence.title}', // TODO: Replace with rating
+                          Text(residence.title, // TODO: Replace with rating
                               style: const TextStyle(fontWeight: FontWeight.bold)),
                         ],
                       ),
@@ -135,7 +145,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              '${residence.title}', // TODO: Replace with owner name
+                              residence.title, // TODO: Replace with owner name
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -195,7 +205,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                                   ),
                                   const SizedBox(height: 20),
                                   Text(
-                                    '${residence.title}', // TODO: Replace with description
+                                    residence.title, // TODO: Replace with description
                                     style: const TextStyle(height: 1.5),
                                   ),
                                 ],
@@ -203,8 +213,14 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                             ),
 
                             // Gallery Section
-                            const Center(
-                              child: Text('Gallery Section (TODO)'),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 20.0, left: 10,right: 10), // adjust the value as needed
+                              child: GalleryImage(
+                                imageUrls: listOfUrls,
+                                numOfShowImages: listOfUrls.length>6?6:listOfUrls.length,
+                                galleryBackgroundColor: AppTheme.backgroundColor,
+                                titleGallery:""
+                              ),
                             ),
 
                             // Amenities Section

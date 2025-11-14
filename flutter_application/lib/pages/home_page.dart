@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/residence_card.dart';
 import 'package:flutter_application/models/residence_summary.dart';
-import 'package:flutter_application/theme.dart'; 
 import 'package:flutter_application/pages/property_detail_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -23,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
+      appBar: AppBar(title: const Text('Home1')),
       body: Center(
          child: ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(

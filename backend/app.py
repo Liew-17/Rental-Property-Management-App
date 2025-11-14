@@ -1,30 +1,32 @@
-from flask import Flask
 from database import db, init_db
 from models.user import User
+from models.property import Property
+from models.property import PropertyImage
+from models.property import Residence
 from routes.auth_route import auth_bp
 from routes.property_route import property_bp
+from routes.file_route import file_bp
 from flask_cors import CORS
+from flask import Flask, send_from_directory
+import os
 
+# Initialize Flask app
 app = Flask(__name__)
-CORS(app) 
+CORS(app)  
 
+# Initialize DB
 init_db(app)
-
 with app.app_context():
     db.create_all()
 
+# Uploads folder configuration
+app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
 
-counter = 0
+# Register Blueprints
+app.register_blueprint(auth_bp)
+app.register_blueprint(property_bp)
+app.register_blueprint(file_bp)
 
-
-@app.route("/test")
-def test():
-    global counter
-    counter += 1
-    return f"This is a test response from Flask! You have call this API {counter} time"
-
-app.register_blueprint(auth_bp, url_prefix="/auth")
-app.register_blueprint(property_bp, url_prefix="/property")
-
+# Run the app
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
