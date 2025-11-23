@@ -21,6 +21,8 @@ class ProfilePage extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
+
+                if (!context.mounted) return;
                 Navigator.pushReplacementNamed(context, '/');
               },
               child: const Text("Sign Out"),

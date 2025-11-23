@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_application/custom_widgets/location_picker.dart';
 import 'package:flutter_application/theme.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';                                         
 import 'package:flutter_application/services/api_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -33,39 +34,9 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
   String? _selectedDistrict;
   String? _selectedCity;
 
-  List<String> _districts = [];
-  List<String> _cities = [];
 
   XFile? _thumbnail;
   final picker = ImagePicker();
-
-  // Sample Malaysian location data (May move to center storage later)
-  final List<String> _states = [
-    "Johor", "Kedah", "Kelantan", "Malacca", "Negeri Sembilan",
-    "Pahang", "Penang", "Perak", "Perlis", "Sabah", "Sarawak",
-    "Selangor", "Terengganu",
-    "Kuala Lumpur", "Labuan", "Putrajaya"
-  ];
-
-  final Map<String, Map<String, List<String>>> _locationData = {
-    "Selangor": {
-      "Petaling": ["Petaling Jaya", "Subang Jaya", "Klang"],
-      "Hulu Langat": ["Kajang", "Semenyih", "Bangi"],
-      "Gombak": ["Batu Caves", "Gombak town"],
-    },
-    "Kuala Lumpur": {
-      "Kuala Lumpur": ["Bukit Bintang", "KLCC", "Segambut"],
-    },
-    "Johor": {
-      "Johor Bahru": ["Johor Bahru", "Pasir Gudang", "Kulai"],
-      "Muar": ["Muar town", "Tangkak"],
-    },
-    "Penang": {
-      "Seberang Perai": ["Butterworth", "Bukit Mertajam", "Nibong Tebal"],
-      "Penang Island": ["George Town", "Bayan Lepas", "Balik Pulau"],
-    },
-    // Add more as needed
-  };
 
   Future<void> _pickThumbnail() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -131,7 +102,7 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
   }
 
   @override
-Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       title: const Text(
@@ -146,7 +117,10 @@ Widget build(BuildContext context) {
       ),
 
     body: SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0, // more padding left & right
+                  vertical: 16.0,   // keep same top & bottom
+                ),
       child: Form(
         key: _formKey,
         child: Column(
@@ -168,8 +142,7 @@ Widget build(BuildContext context) {
                                 DecorationImage(
                                   image: kIsWeb?
                                     NetworkImage(_thumbnail!.path) // allows preview for website
-                                  : FileImage(File(_thumbnail!.path)) as ImageProvider,
-                                  
+                                  : FileImage(File(_thumbnail!.path)) as ImageProvider,                          
                                   fit: BoxFit.cover,
                                 )
                               : null,
@@ -207,12 +180,19 @@ Widget build(BuildContext context) {
               controller: _titleController,
               decoration: const InputDecoration(labelText: "Title"),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
 
             // Description
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: "Description"),
+              decoration: const InputDecoration(
+                labelText: "Description",
+                alignLabelWithHint: true, // makes label align to top-left
+                border: OutlineInputBorder(), // optional: makes it look like a textbox
+              ),
+              keyboardType: TextInputType.multiline,
+              maxLines: 8, // <-- text area height (adjust as you want)
+              minLines: 3, // optional
             ),
 
             const SizedBox(height: 20),
@@ -265,62 +245,14 @@ Widget build(BuildContext context) {
             
             const SizedBox(height: 20),
 
-            // Dropdowns for State/District/City + Address
-
-            DropdownButtonFormField<String>(
-              initialValue: _selectedState,
-              decoration: const InputDecoration(labelText: "State"),
-              items: _states
-                  .map((state) => DropdownMenuItem(value: state, child: Text(state)))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedState = value;
-                  _selectedDistrict = null;
-                  _selectedCity = null;
-                  if(value != null && _locationData.containsKey(value)){
-                    _districts = _locationData[value]!.keys.toList();
-                  } else{
-                    _districts = [];
-                  }
-                  _cities = [];
-                });
-              },
-            ),
-
-            const SizedBox(height: 10),
-
-            DropdownButtonFormField<String>(
-              initialValue: _selectedDistrict,
-              decoration: const InputDecoration(labelText: "District"),
-              items: _districts
-                  .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedDistrict = value;
-                  _selectedCity = null;
-                  if (_selectedState != null && _selectedDistrict != null) {
-                    _cities = _locationData[_selectedState!]![_selectedDistrict!]!;
-                  } else {
-                    _cities = [];
-                  }
-                });
-              },
-            ),
-
-            const SizedBox(height: 10),
-
-            DropdownButtonFormField<String>(
-              initialValue: _selectedCity,
-              decoration: const InputDecoration(labelText: "City"),
-              items:
-                  _cities.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedCity = value;
-                });
-              },
+            // Location picker for State/District/City 
+            LocationPicker(
+              onChanged: (state, district, city) {
+                _selectedState = state ?? '';
+                _selectedDistrict = district ?? '';
+                _selectedCity = city ?? '';
+              }, 
+            
             ),
 
             const SizedBox(height: 10),

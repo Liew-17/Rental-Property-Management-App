@@ -6,7 +6,7 @@ class Property {
   String? description;
   String type; // "residence", "vehicle", "item"
   String? thumbnailUrl;
-  bool verified;
+  bool isVerified;
   String? state;
   String? city;
   String? district;
@@ -18,6 +18,7 @@ class Property {
   int? ownerId;
   String? ownerName;
   List<String>? gallery;
+  bool isFavorited;
 
   Property({
     this.id,
@@ -26,7 +27,7 @@ class Property {
     this.description,
     required this.type,
     this.thumbnailUrl,
-    this.verified = false,
+    this.isVerified = false,
     this.state,
     this.city,
     this.district,
@@ -38,6 +39,7 @@ class Property {
     this.ownerId,
     this.ownerName,
     this.gallery,
+    this.isFavorited = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -47,7 +49,7 @@ class Property {
     "description": description,
     "type": type,
     "thumbnail_url": thumbnailUrl,
-    "verified": verified,
+    "is_verified": isVerified,
     "state": state,
     "city": city,
     "district": district,
@@ -59,6 +61,7 @@ class Property {
     "user_id": ownerId,
     "owner_name": ownerName,
     "gallery": gallery,
+    "is_favorited":isFavorited,
   };
 
   factory Property.fromJson(Map<String, dynamic> json) {
@@ -69,18 +72,19 @@ class Property {
       description: json['description'],
       type: json['type'] ?? "general",
       thumbnailUrl: json['thumbnail_url'],
-      verified: json['verified'] ?? false,
+      isVerified: json['is_verified'] ?? false,
       state: json['state'],
       city: json['city'],
       district: json['district'],
       address: json['address'],
-      price: json['price'] != null ? (json['price'] as num).toDouble() : null,
+      price: json['price'] != null ? (json['price'] as num).toDouble() : 0,
       status: json['status'],
       rules: json['rules'],
       features: json['features'],
       ownerId: json['user_id'],
       ownerName: json['owner_name'],
       gallery: json['gallery'] != null ? List<String>.from(json['gallery']) : null,
+      isFavorited: json['is_favorited'] ?? false,
     );
   }
 }

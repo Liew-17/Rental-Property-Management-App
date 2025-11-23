@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter_application/models/property.dart';
 
 class Residence extends Property {
@@ -12,7 +11,7 @@ class Residence extends Property {
     super.title,
     super.description,
     super.thumbnailUrl,
-    super.verified = false,
+    super.isVerified = false,
     super.state,
     super.city,
     super.district,
@@ -24,6 +23,7 @@ class Residence extends Property {
     super.ownerId,
     super.ownerName,
     super.gallery,
+    super.isFavorited,
     this.numBedrooms,
     this.numBathrooms,
     this.landSize,
@@ -47,18 +47,19 @@ class Residence extends Property {
       title: json['title'],
       description: json['description'],
       thumbnailUrl: json['thumbnail_url'],
-      verified: json['verified'] ?? false,
+      isVerified: json['is_verified'] ?? false,
       state: json['state'],
       city: json['city'],
       district: json['district'],
       address: json['address'],
-      price: (json['price'] != null) ? (json['price'] as num).toDouble() : null,
+      price: (json['price'] != null) ? (json['price'] as num).toDouble() : 0,
       status: json['status'],
       rules: json['rules'],
       features: json['features'],
       ownerId: json['user_id'],
       ownerName: json['owner_name'],
       gallery: json['gallery'] != null ? List<String>.from(json['gallery']) : [],
+      isFavorited: json['is_favorited'] ?? false,
       numBedrooms: json['num_bedrooms'],
       numBathrooms: json['num_bathrooms'],
       landSize: json['land_size'] != null ? (json['land_size'] as num).toDouble() : null,

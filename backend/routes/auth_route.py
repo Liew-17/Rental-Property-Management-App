@@ -17,13 +17,15 @@ def register():
 
     return jsonify({
         "uid": user.uid,
+        "id": user.id,
         "username": user.username,
         "role": user.role
     }), 200
 
 @auth_bp.route("/check/<uid>")
 def check_user(uid):
-    if auth_service.user_exists(uid):
-        return jsonify({"exists": True}), 200
+    exists, user_id = auth_service.user_exists(uid)
+    if exists:
+        return jsonify({"exists": True, "id": user_id}), 200
     else:
-        return jsonify({"exists": False}), 200
+        return jsonify({"exists": False, "id": None}), 200

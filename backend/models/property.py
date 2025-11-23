@@ -1,4 +1,7 @@
+from sqlalchemy import case
 from database import db
+from typing import Optional
+from sqlalchemy.ext.declarative import declared_attr
 
 class Property(db.Model):
     __tablename__ = "properties"
@@ -25,6 +28,11 @@ class Property(db.Model):
         "User",
         backref=db.backref("properties", lazy=True, cascade="all, delete-orphan")
     )
+
+    __mapper_args__ = {
+        "polymorphic_identity": "property",
+        "polymorphic_on": type
+    }
 
     @classmethod
     def create(
@@ -66,7 +74,7 @@ class Property(db.Model):
         return new_property
 
     @classmethod
-    def find_by_id(cls, property_id):
+    def find_by_id(cls, property_id) -> Optional["Property"]:
         """Find a property by its unique ID."""
         return cls.query.get(property_id)
 
@@ -76,7 +84,7 @@ class Property(db.Model):
         return cls.query.filter_by(user_id=user_id).all()
 
     @classmethod
-    def find_by_location(cls, state=None, city=None, district=None):
+    def find_by_location(cls, state=None, city=None, district=None, page = 1):
         """Find properties filtered by any combination of state, city, or district."""
         query = cls.query.filter_by(status="listed") 
 
@@ -86,7 +94,20 @@ class Property(db.Model):
             query = query.filter_by(city=city)
         if district:
             query = query.filter_by(district=district)
-        return query.all()
+
+        order_case = case(
+            (cls.district == district, 3),
+            (cls.city == city, 2),
+            (cls.state == state, 1),
+            else_=0
+        )
+
+        query = query.order_by(order_case.desc())
+        length = query.count()
+        offset = (page - 1) * 10 # ten item per page
+        query = query.limit(10).offset(offset)
+
+        return query.all(), length
 
 class PropertyImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -111,21 +132,44 @@ class PropertyImage(db.Model):
         """Return a list of image urls"""
         return cls.query.filter_by(property_id=property_id).all()
     
-class Residence(db.Model):
-    __tablename__ = "residences"
+class Residence(Property):
+    __tablename__ = "residences" 
 
-    id = db.Column(db.Integer, primary_key=True)
+    residence_id = db.Column(db.Integer, primary_key=True)
     property_id = db.Column(db.Integer, db.ForeignKey("properties.id"), nullable=False, unique=True) # Link residence details to the property
 
-    num_bedrooms = db.Column(db.Integer)
-    num_bathrooms = db.Column(db.Integer)
-    land_size = db.Column(db.Float)  # sqft
+    __mapper_args__ = {
+            "polymorphic_identity": "residence",
+        }
+
+    num_bedrooms = db.Column(db.Integer, default = 0)
+    num_bathrooms = db.Column(db.Integer, default = 0)
+    land_size = db.Column(db.Float, default = 0)  # sqft
+
+
 
     @classmethod
-    def create(cls, property_id, num_bedrooms=None, num_bathrooms=None, land_size=None):
-        """Create a Residence linked to a Property"""
+    def create_residence(cls, *, user_id, name, title=None, description=None,
+                         thumbnail_url="", state=None, city=None, district=None,
+                         address=None, price=None, status="unlisted", rules=None,
+                         features=None, num_bedrooms=None, num_bathrooms=None,
+                         land_size=None):
+        """Create a Residence in one step."""
         new_residence = cls(
-            property_id=property_id,
+            user_id=user_id,
+            name=name,
+            title=title,
+            description=description,
+            type="residence",
+            thumbnail_url=thumbnail_url,
+            state=state,
+            city=city,
+            district=district,
+            address=address,
+            price=price,
+            status=status,
+            rules=rules,
+            features=features,
             num_bedrooms=num_bedrooms,
             num_bathrooms=num_bathrooms,
             land_size=land_size

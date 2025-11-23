@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
 import 'package:http/http.dart' as http;
 import 'package:flutter_application/services/api_service.dart';
 import 'dart:convert';
+import 'package:flutter_application/models/user.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -30,6 +31,8 @@ class LoginPage extends StatelessWidget {
           bool exists = data['exists'] ?? false;
 
           if (exists) {
+            AppUser appUser = AppUser();
+            appUser.id =  data['id'];
             onSignedIn();     
           } else {
             onRegister();

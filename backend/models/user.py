@@ -7,6 +7,10 @@ class User(db.Model):
     uid = db.Column(db.String(80), nullable=False)
     username = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(20), default="user")
+    state = db.Column(db.String(100), nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    district = db.Column(db.String(100), nullable=True)
+    address = db.Column(db.String(255), nullable=True)
 
     @classmethod
     def create(cls, uid, username, role="user"):

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application/services/api_service.dart';
 import 'dart:convert';
@@ -48,8 +49,12 @@ class _RegisterPageState extends State<RegisterPage> {
         }),
       );
 
+      final data = jsonDecode(response.body);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return;
+        AppUser appUser = AppUser();
+        appUser.id =  data['id'];
         Navigator.pushReplacementNamed(context, '/profile');
       }
 
@@ -60,6 +65,8 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = false;
       }); 
     }
+
+
   }
 
   @override

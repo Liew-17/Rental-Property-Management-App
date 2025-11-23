@@ -43,11 +43,16 @@ dependencies:
   galleryimage:
   image_picker: ^0.8.7+5   
   firebase_storage: ^13.0.3
+  flutter_chat_core: ^2.0.0
+  flutter_chat_ui: ^2.0.0
+  flutter_chat_types: ^3.3.0
+  flyer_chat_image_message: ^2.0.0
+  http: ^1.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  http: ^1.1.0
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your

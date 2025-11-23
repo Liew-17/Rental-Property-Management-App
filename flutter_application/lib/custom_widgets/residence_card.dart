@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/models/residence.dart';
+import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/theme.dart';
-import 'package:flutter_application/models/residence_summary.dart';
 
 class ResidenceCard extends StatelessWidget {
-  final ResidenceSummary residence;
+  final Residence residence;
   final void Function(String id) onTap;
   final void Function(bool newValue)? onFavoriteToggle;
 
@@ -17,11 +18,11 @@ class ResidenceCard extends StatelessWidget {
  @override
 Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
-  final cardWidth = screenWidth * 0.9;
+  final cardWidth = screenWidth * 0.933;
   final cardHeight = (cardWidth * 0.7).clamp(350.0, 800.0); // remain within a suitable height
 
   return GestureDetector(
-    onTap: () => onTap(residence.id),
+    onTap: () => onTap(residence.id.toString()),
     child: SizedBox(
       width: cardWidth,
       height: cardHeight,
@@ -41,21 +42,19 @@ Widget build(BuildContext context) {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: residence.imageUrl != null
-                        ? Image.network(
-                            residence.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
+                    child: (residence.thumbnailUrl != null && residence.thumbnailUrl!.isNotEmpty)?
+                              Image.network(
+                                ApiService.buildImageUrl(residence.thumbnailUrl!),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
                                   color: Colors.grey[300],
-                                  child: const Center(
-                                      child: Icon(Icons.image)),
+                                  child: const Center(child: Icon(Icons.image)),
                                 ),
-                          )
-                        : Container(
-                            color: Colors.grey[300],
-                            child: const Center(child: Icon(Icons.image)),
-                          ),
+                              )
+                            : Container(
+                                color: Colors.grey[300],
+                                child: const Center(child: Icon(Icons.image)),
+                              )
                   ),
                   // Favorite button
                   Positioned(
@@ -74,7 +73,7 @@ Widget build(BuildContext context) {
                           residence.isFavorited
                               ? Icons.favorite
                               : Icons.favorite_border,
-                          color: AppTheme.primaryColor,
+                          color: AppTheme.favoritedColor,
                         ),
                       ),
                     ),
@@ -92,7 +91,7 @@ Widget build(BuildContext context) {
                   children: [
                     // Title
                     Text(
-                      residence.title,
+                      residence.title ?? "",
                       style: AppTheme.heading1.copyWith(fontSize: 18),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -104,15 +103,15 @@ Widget build(BuildContext context) {
                       children: [
                         Icon(Icons.bed, size: 14, color: AppTheme.primaryColor),
                         const SizedBox(width: 4),
-                        Text('${residence.numBeds}'),
+                        Text('${residence.numBedrooms}'),
                         const SizedBox(width: 10),
                         Icon(Icons.bathtub, size: 14, color: AppTheme.primaryColor),
                         const SizedBox(width: 4),
-                        Text('${residence.numBaths}'),
+                        Text('${residence.numBathrooms}'),
                         const SizedBox(width: 10),
                         Icon(Icons.square_foot, size: 14, color: AppTheme.primaryColor),
                         const SizedBox(width: 4),
-                        Text('${residence.area} sqft'),
+                        Text('${residence.landSize} sqft'),
                       ],
                     ),
                     const SizedBox(height: 15), 
@@ -122,7 +121,7 @@ Widget build(BuildContext context) {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
-                          '\$${residence.price.toStringAsFixed(0)}',
+                          '\$${residence.price!.toStringAsFixed(0)}',
                           style: AppTheme.heading1.copyWith(
                             fontSize: 16,
                             color: AppTheme.primaryColor,

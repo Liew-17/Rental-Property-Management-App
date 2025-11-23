@@ -5,6 +5,8 @@ property_bp = Blueprint("property_bp", __name__, url_prefix="/property")
 
 @property_bp.route("/add_residence_property", methods=["POST"])
 def add_residence_property_route():
+    """ Add new residence property """
+    
     # Get text fields from form-data
     uid = request.form.get("uid")
     name = request.form.get("name")
@@ -50,4 +52,39 @@ def add_residence_property_route():
 
     return jsonify({"success_message": message, "property_id": property_id, "thumbnail_url": thumbnail_url}), 201
 
+@property_bp.route("/residence/details", methods=["POST"])
+def residence_details_post():
+    """ Get residence details by property_id and uid """
+    
+    data = request.get_json()
 
+    if not data:
+        return jsonify({"success": False, "message": "No JSON data provided"}), 400
+
+    property_id = data.get("property_id")
+    uid = data.get("uid")  
+
+    if property_id is None:
+        return jsonify({"success": False, "message": "property_id is required"}), 400
+
+    success, result = property_service.get_residence_details(property_id, uid)
+
+    if not success:
+        return jsonify({"success": False, "message": result}), 404
+
+    return jsonify({"success": True, "data": result}), 200
+
+@property_bp.route("/residences/summaries", methods=["POST"])
+def residences_summaries_route():
+    data = request.get_json() or {}
+
+    state = data.get("state")
+    city = data.get("city")
+    district = data.get("district")
+    user_id = data.get("id")
+    page = data.get("page")
+
+    summaries, length = property_service.get_residence_summaries(state=state, city=city, district=district, user_id=user_id, page=page)
+
+    return jsonify({"summaries": summaries, "length": length}), 200
+        

@@ -8,4 +8,8 @@ def register(uid, username, role="user"):
     return user
 
 def user_exists(uid):
-    return User.find_by_uid(uid) is not None
+    user = User.find_by_uid(uid)
+    if user:
+        return True, user.id
+    else:
+        return False, None

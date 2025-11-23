@@ -7,6 +7,8 @@ import 'pages/profile_page.dart';
 import 'pages/register_page.dart';
 import 'pages/main_page.dart';
 import 'pages/add_property_page.dart';
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
