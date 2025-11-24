@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // Colors
   static const Color primaryColor = Color.fromARGB(255, 1, 103, 124);
-  static const Color secondaryColor = Color(0xFF1E1E1E);
+  static const Color secondaryColor = Color.fromARGB(255, 237, 248, 255);
   static const Color backgroundColor = Colors.white;
   static const Color accentColor = Colors.blueAccent;
   static const Color favoritedColor = Color.fromARGB(255, 255, 0, 111);

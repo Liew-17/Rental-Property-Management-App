@@ -79,13 +79,11 @@ def send_text_message():
     }), 200
 
 
-@chat_bp.route("/messages", methods=["POST"])
+@chat_bp.route("/messages", methods=["GET"])
 def api_get_messages():
-    data = request.get_json()
-
-    channel_id = data.get("channel_id")
-    limit = data.get("limit")
-    offset = data.get("offset")
+    channel_id = request.args.get("channel_id", type=int)
+    limit = request.args.get("limit", type=int)
+    offset = request.args.get("offset", type=int)
 
     if channel_id is None:
         return jsonify({
@@ -93,6 +91,7 @@ def api_get_messages():
             "message": "channel_id is required"
         }), 400
 
+    # Fetch messages
     success, message, messages = get_messages(
         channel_id=channel_id,
         limit=limit,
@@ -119,3 +118,4 @@ def api_get_messages():
         "message": message,
         "messages": result
     }), 200
+

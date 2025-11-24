@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/property_management_card.dart';
 import 'package:flutter_application/models/property.dart';
+import 'package:flutter_application/models/user.dart';
+import 'package:flutter_application/pages/add_property_page.dart';
 import 'package:flutter_application/pages/property_management_page.dart';
+import 'package:flutter_application/services/property_service.dart';
 import 'package:flutter_application/theme.dart';
 
 
@@ -29,25 +32,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
   }
 
   Future<List<Property>> loadOwnedProperties() async {
-    await Future.delayed(const Duration(milliseconds: 500)); // simulate network
-    return [
-      Property(
-        id: 1,
-        name: "Condo KL",
-        title: "High Floor City View",
-        type: "residence",
-        status: "listed",
-        thumbnailUrl: "",
-      ),
-      Property(
-        id: 2,
-        name: "Landed House",
-        title: "Double Storey Bandar Setia",
-        type: "residence",
-        status: "rented",
-        thumbnailUrl: "",
-      ),
-    ];
+    return PropertyService.getOwnedProperties(AppUser().id??0);
   }
 
   Future<List<Property>> loadRentedProperties() async {
@@ -69,8 +54,15 @@ class _MyPropertyPageState extends State<MyPropertyPage>
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppTheme.primaryColor,
-        onPressed: () {
-          Navigator.pushNamed(context, '/add');
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => AddPropertyPage()),
+          );
+
+          if (result == true) {
+            setState(() {}); //refresh
+          }
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -129,11 +121,13 @@ class _MyPropertyPageState extends State<MyPropertyPage>
                               context,
                               MaterialPageRoute(
                                 builder: (_) => PropertyManagementPage(
-                                  property: p,
+                                  propertyId: p.id,
                                   mode: PropertyMode.owned,
                                 ),
                               ),
-                            );
+                            ).then((_) {
+                              setState(() {});   // refresh page when coming back
+                            });
                           },
                           onDelete: () {
                             // TODO: delete
@@ -175,11 +169,13 @@ class _MyPropertyPageState extends State<MyPropertyPage>
                               context,
                               MaterialPageRoute(
                                 builder: (_) => PropertyManagementPage(
-                                  property: p,
+                                  propertyId: p.id,
                                   mode: PropertyMode.rented,
                                 ),
                               ),
-                            );
+                            ).then((_) {
+                              setState(() {});   // refresh page when coming back
+                            });
                           },
                         );
                       },

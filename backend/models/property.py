@@ -108,6 +108,26 @@ class Property(db.Model):
         query = query.limit(10).offset(offset)
 
         return query.all(), length
+    
+    @classmethod
+    def update(cls, property_id: int, **kwargs):
+        """
+        Update a property by ID. 
+        Only updates fields provided in kwargs.
+        
+        Example:
+            Property.update(1, name="New Name", price=1200)
+        """
+        prop = cls.query.get(property_id)
+        if not prop:
+            return None  # or raise Exception("Property not found")
+        
+        for key, value in kwargs.items():
+            if hasattr(prop, key):
+                setattr(prop, key, value)
+
+        db.session.commit()
+        return prop
 
 class PropertyImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -131,6 +151,16 @@ class PropertyImage(db.Model):
     def get_images_for_property(cls, property_id):
         """Return a list of image urls"""
         return cls.query.filter_by(property_id=property_id).all()
+    
+    @classmethod
+    def delete_image_by_url(cls, property_id, image_url):
+        """Delete a specific image by URL for a given property"""
+        image = cls.query.filter_by(property_id=property_id, image_url=image_url).first()
+        if image:
+            db.session.delete(image)
+            db.session.commit()
+            return True
+        return False
     
 class Residence(Property):
     __tablename__ = "residences" 

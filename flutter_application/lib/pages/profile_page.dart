@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_application/models/user.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -7,27 +8,16 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final user = FirebaseAuth.instance.currentUser;
-    final uid = user?.uid;
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Profile")),
+      appBar: AppBar(
+        title: const Text('Profile'),
+        centerTitle: true,
+      ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Welcome! You are logged in. $uid"),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-
-                if (!context.mounted) return;
-                Navigator.pushReplacementNamed(context, '/');
-              },
-              child: const Text("Sign Out"),
-            ),
-          ],
+        child: Text(
+          'User Name: ${AppUser().name}',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18),
         ),
       ),
     );

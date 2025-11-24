@@ -109,9 +109,26 @@ def get_residence_summaries(*,state=None, city=None, district=None, user_id, pag
     return summaries, length
 
 def get_owned_properties(owner_id):
-    pass
+    props = Property.find_by_user_id(owner_id)
+
+    data = []
+
+    for prop in props:
+        if not isinstance(prop, Residence): #ensure it is residence
+            continue
+
+        data.append({         
+            "id": prop.id,
+            "name": prop.name,
+            "title": prop.title,
+            "thumbnail_url": prop.thumbnail_url,
+            "status": prop.status,
+            "owner_id": owner_id
+        })
+            
 
 
+    return data
 
 def get_residence_details(property_id, by_uid):
     """  Return residence's details information """
@@ -141,9 +158,9 @@ def get_residence_details(property_id, by_uid):
         "status": prop.status,
         "rules": prop.rules,
         "features": prop.features,
-        "user_id": owner.id if owner else None,
+        "owner_id": owner.id if owner else None,
         "owner_name": owner.username if owner else None,
-        "gallery": prop.images if prop.images else [],
+        "gallery": [img.image_url for img in prop.images] if prop.images else [],
         "is_favorited": False,  # replace with actual logic if needed
         "num_bedrooms": prop.num_bedrooms,
         "num_bathrooms": prop.num_bathrooms,
@@ -152,3 +169,58 @@ def get_residence_details(property_id, by_uid):
 
 
     return True, data
+
+def update_residence(property_id, thumbnail, args):
+    updated = Property.update(property_id, **args)
+
+    if not updated:
+        return False  # property not found
+
+    if thumbnail is not None:
+        folder_name = f"properties/{updated.id}"
+        ext = thumbnail.filename.rsplit('.', 1)[-1].lower()
+        filename = f"{uuid.uuid4()}.{ext}"
+
+        thumbnail_url = upload_image(
+            image=thumbnail,
+            folder=folder_name,
+            filename=filename
+        )
+
+        updated.thumbnail_url = thumbnail_url
+        db.session.commit()  # update the thumbnail URL
+
+    return True
+    
+def add_image(property_id, gallery_image):
+    prop = Property.find_by_id(property_id)
+
+    if not prop:
+        return False
+
+    if gallery_image is not None:
+        folder_name = f"properties/{property_id}/gallery"
+        ext = gallery_image.filename.rsplit('.', 1)[-1].lower()
+        filename = f"{uuid.uuid4()}.{ext}"
+
+        image_url = upload_image(
+            image=gallery_image,
+            folder=folder_name,
+            filename=filename
+        )
+    
+    PropertyImage.add_image(property_id,image_url)
+    return True
+
+def get_gallery_images(property_id: int):
+    prop = Property.find_by_id(property_id)
+    if not prop:
+        return None
+
+    images = PropertyImage.get_images_for_property(property_id)
+    return [img.image_url for img in images]
+
+def delete_image(property_id, image_url):
+    # add delete of file on server in future.
+    return PropertyImage.delete_image_by_url(property_id=property_id,image_url=image_url)
+    

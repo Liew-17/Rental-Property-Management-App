@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/models/property.dart';
+import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/theme.dart';
  
 class OwnedPropertyCard extends StatelessWidget {
@@ -18,7 +19,7 @@ class OwnedPropertyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return PropertyCardBase(
       property: property,
-      showDelete: true,
+      showDelete: property.status=="unlisted"? true : false,
       onView: onView,
       onDelete: onDelete,
     );
@@ -70,15 +71,23 @@ class PropertyCardBase extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            // ========== IMAGE ==========
+    
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: (property.thumbnailUrl != null && property.thumbnailUrl!.isNotEmpty)
                   ? Image.network(
-                      property.thumbnailUrl!,
+                      ApiService.buildImageUrl(property.thumbnailUrl!),
                       height: 80,
                       width: 80,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace){
+                            return Container(
+                            height: 80,
+                            width: 80,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.image, size: 32),
+                          );
+                      },
                     )
                   : Container(
                       height: 80,

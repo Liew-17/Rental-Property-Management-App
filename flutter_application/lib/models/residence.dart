@@ -6,7 +6,7 @@ class Residence extends Property {
   double? landSize;
 
   Residence({
-    super.id,
+    required super.id,
     required super.name,
     super.title,
     super.description,
@@ -56,7 +56,7 @@ class Residence extends Property {
       status: json['status'],
       rules: json['rules'],
       features: json['features'],
-      ownerId: json['user_id'],
+      ownerId: json['owner_id'],
       ownerName: json['owner_name'],
       gallery: json['gallery'] != null ? List<String>.from(json['gallery']) : [],
       isFavorited: json['is_favorited'] ?? false,

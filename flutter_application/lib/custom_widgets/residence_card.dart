@@ -5,7 +5,7 @@ import 'package:flutter_application/theme.dart';
 
 class ResidenceCard extends StatelessWidget {
   final Residence residence;
-  final void Function(String id) onTap;
+  final void Function(int id) onTap;
   final void Function(bool newValue)? onFavoriteToggle;
 
   const ResidenceCard({
@@ -22,7 +22,7 @@ Widget build(BuildContext context) {
   final cardHeight = (cardWidth * 0.7).clamp(350.0, 800.0); // remain within a suitable height
 
   return GestureDetector(
-    onTap: () => onTap(residence.id.toString()),
+    onTap: () => onTap(residence.id!),
     child: SizedBox(
       width: cardWidth,
       height: cardHeight,

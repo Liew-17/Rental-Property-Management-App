@@ -45,30 +45,25 @@ class ChatService {
     required int channelId,
     int? limit,
     int? offset,
-  }) async {
-    final uri = ApiService.buildUri("/chat/messages");
+    }) async {
 
-    final body = {
-      "channel_id": channelId,
-      if (limit != null) "limit": limit,
-      if (offset != null) "offset": offset,
-    };
+    final endpoint = "/chat/messages"
+        "?channel_id=$channelId"
+        "${limit != null ? "&limit=$limit" : ""}"
+        "${offset != null ? "&offset=$offset" : ""}";
 
-    final response = await http.post(
-      uri,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(body),
-    );
+    final uri = ApiService.buildUri(endpoint);
+
+    // Send GET request
+    final response = await http.get(uri);
 
     if (response.statusCode != 200) {
-      
       throw Exception("Failed to fetch messages");
     }
 
     final data = jsonDecode(response.body);
 
     List<dynamic> rawMessages = data["messages"];
-
     return rawMessages.map((m) => Message.fromJson(m)).toList();
   }
 

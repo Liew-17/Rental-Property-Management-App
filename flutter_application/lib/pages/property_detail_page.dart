@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/models/residence.dart';
+import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/services/api_service.dart';
 import '../theme.dart';
 import 'package:galleryimage/galleryimage.dart';
@@ -7,8 +8,9 @@ import 'package:flutter_application/services/property_service.dart';
 
 class PropertyDetailPage extends StatefulWidget {
   final int propertyId;
+  final bool viewOnly;
 
-  const PropertyDetailPage({super.key, required this.propertyId});
+  const PropertyDetailPage({super.key, required this.propertyId, required this.viewOnly});
 
   @override
   State<PropertyDetailPage> createState() => _PropertyDetailPageState();
@@ -19,6 +21,8 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
   late TabController _tabController;
   late Future<Residence> _residenceFuture;
 
+  bool _resolvedViewOnly = true; 
+
   List<String> listOfUrls = []; 
 
   @override
@@ -28,6 +32,13 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
 
     // Fetch the residence details
     _residenceFuture = PropertyService.getDetails(widget.propertyId);
+
+    _residenceFuture.then((residence) {
+      setState(() {
+        _resolvedViewOnly = widget.viewOnly ? true : (residence.ownerId == AppUser().id); // check if it is owned by the current user
+      }); 
+    });
+
   }
 
   Widget _infoTile(IconData icon, String label) {
@@ -74,14 +85,24 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                       background: Stack(
                         fit: StackFit.expand,
                         children: [
-                          residence.thumbnailUrl != null
-                              ? Image.network(
+                          residence.thumbnailUrl != null?
+                              Image.network(
                                   ApiService.buildImageUrl(residence.thumbnailUrl!),
                                   fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                        child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                                      ),
+                                    );
+                                  },
                                 )
                               : Container(
-                                  color: Colors.grey[300],
-                                  child: const Placeholder(),
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                        child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                                      ),
                                 ),
                           Positioned(
                             top: 40,
@@ -156,22 +177,23 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                                   style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  // TODO: contact owner
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              if (!_resolvedViewOnly)
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // TODO: contact owner
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.all(12),
                                   ),
-                                  padding: const EdgeInsets.all(12),
-                                ),
-                                child: const Icon(
-                                  Icons.chat,
-                                  color: Colors.white,
-                                ),
-                              )
+                                  child: const Icon(
+                                    Icons.chat,
+                                    color: Colors.white,
+                                  ),
+                                )
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -301,13 +323,14 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                             color: AppTheme.primaryColor,
                           ),
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            // TODO: rent now action
-                          },
-                          style: AppTheme.primaryButton,
-                          child: const Text('Rent Now'),
-                        ),
+                        if (!_resolvedViewOnly)
+                          ElevatedButton(
+                            onPressed: () {
+                              // TODO: rent now action
+                            },
+                            style: AppTheme.primaryButton,
+                            child: const Text('Rent Now'),
+                          ),
                       ],
                     ),
                   ),

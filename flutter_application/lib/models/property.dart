@@ -1,6 +1,6 @@
 // Base class
 class Property {
-  int? id;
+  int id;
   String name;
   String? title;
   String? description;
@@ -21,7 +21,7 @@ class Property {
   bool isFavorited;
 
   Property({
-    this.id,
+    required this.id,
     required this.name,
     this.title,
     this.description,
@@ -58,7 +58,7 @@ class Property {
     "status": status,
     "rules": rules,
     "features": features,
-    "user_id": ownerId,
+    "owner_id": ownerId,
     "owner_name": ownerName,
     "gallery": gallery,
     "is_favorited":isFavorited,
@@ -81,7 +81,7 @@ class Property {
       status: json['status'],
       rules: json['rules'],
       features: json['features'],
-      ownerId: json['user_id'],
+      ownerId: json['owner_id'],
       ownerName: json['owner_name'],
       gallery: json['gallery'] != null ? List<String>.from(json['gallery']) : null,
       isFavorited: json['is_favorited'] ?? false,

@@ -125,7 +125,7 @@ class _HomePageState extends State<HomePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          PropertyDetailPage(propertyId: int.parse(id)),
+                          PropertyDetailPage(propertyId: id,viewOnly: false),
                     ),
                   );
                 },
