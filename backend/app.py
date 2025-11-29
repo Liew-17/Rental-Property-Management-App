@@ -9,6 +9,7 @@ from routes.auth_route import auth_bp
 from routes.property_route import property_bp
 from routes.file_route import file_bp
 from routes.chat_route import chat_bp
+from routes.user_route import user_bp
 from flask_cors import CORS
 from flask import Flask, send_from_directory
 import os
@@ -30,6 +31,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(property_bp)
 app.register_blueprint(file_bp)
 app.register_blueprint(chat_bp)
+app.register_blueprint(user_bp)
 
 # Run the app
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ class Residence extends Property {
   int? numBedrooms;
   int? numBathrooms;
   double? landSize;
+  String? residenceType;
 
   Residence({
     required super.id,
@@ -27,6 +28,7 @@ class Residence extends Property {
     this.numBedrooms,
     this.numBathrooms,
     this.landSize,
+    this.residenceType,
   }) : super(type: "residence");
 
   @override
@@ -36,6 +38,7 @@ class Residence extends Property {
       "num_bedrooms": numBedrooms,
       "num_bathrooms": numBathrooms,
       "land_size": landSize,
+      'residence_type': residenceType,
     });
     return json;
   }
@@ -63,6 +66,7 @@ class Residence extends Property {
       numBedrooms: json['num_bedrooms'],
       numBathrooms: json['num_bathrooms'],
       landSize: json['land_size'] != null ? (json['land_size'] as num).toDouble() : null,
+      residenceType: json['residence_type'],
     );
   }
 }

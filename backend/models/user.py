@@ -18,7 +18,13 @@ class User(db.Model):
         db.session.add(new_user)
         db.session.commit()
         return new_user
+    
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id=id).first()
+    
 
+ 
     @classmethod
     def find_by_uid(cls, uid):
         return cls.query.filter_by(uid=uid).first()

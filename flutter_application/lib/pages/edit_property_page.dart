@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_application/custom_widgets/feature_editor.dart';
 import 'package:flutter_application/custom_widgets/gallery_editor.dart';
 import 'package:flutter_application/custom_widgets/location_picker.dart';
+import 'package:flutter_application/custom_widgets/residence_type_picker.dart';
 import 'package:flutter_application/custom_widgets/section.dart';
 import 'package:flutter_application/models/residence.dart';
 import 'package:flutter_application/services/api_service.dart';
@@ -48,6 +49,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
   String? _state;
   String? _district;
   String? _city;
+  String? _residenceType;
 
   // Features & Gallery
   String? _features;
@@ -87,6 +89,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
 
         _features = res.features;
         _galleryUrls=res.gallery;
+        _residenceType = res.residenceType;
 
         if (mounted) setState(() => _isLoading = false);
       } catch (e) {
@@ -119,6 +122,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
       "num_bedrooms": int.tryParse(_bedroomCtrl.text) ?? 0,
       "num_bathrooms": int.tryParse(_bathroomCtrl.text) ?? 0,
       "land_size": double.tryParse(_landCtrl.text) ?? 0.0,
+      "residence_type": _residenceType
     };
 
     final success = await PropertyService.updateResidence(
@@ -274,7 +278,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
                   ),
                 ),
 
-                  section(
+                section(
                     "House Details",
                     Row(
                       children: [
@@ -310,6 +314,10 @@ class _EditPropertyPageState extends State<EditPropertyPage>
                           ),
                         ),
 
+ 
+
+ 
+
                         const SizedBox(width: 10),
 
                         // Land Size
@@ -331,6 +339,20 @@ class _EditPropertyPageState extends State<EditPropertyPage>
                       ],
                     ),
                   ),
+
+                                       
+
+                section(
+                  "Residence Type",
+                  ResidenceTypePicker(
+                    initialResidenceType: _residenceType,
+                    onChanged: (value) {
+                        setState(() {
+                          _residenceType = value;
+                        });
+                      },
+                  )
+                ),
 
                 section(
                   "Location",

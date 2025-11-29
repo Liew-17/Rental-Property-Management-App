@@ -22,7 +22,7 @@ Widget build(BuildContext context) {
   final cardHeight = (cardWidth * 0.7).clamp(350.0, 800.0); // remain within a suitable height
 
   return GestureDetector(
-    onTap: () => onTap(residence.id!),
+    onTap: () => onTap(residence.id),
     child: SizedBox(
       width: cardWidth,
       height: cardHeight,

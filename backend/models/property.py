@@ -175,16 +175,19 @@ class Residence(Property):
     num_bedrooms = db.Column(db.Integer, default = 0)
     num_bathrooms = db.Column(db.Integer, default = 0)
     land_size = db.Column(db.Float, default = 0)  # sqft
+    residence_type = db.Column(db.String(50), nullable=True)
 
 
 
     @classmethod
     def create_residence(cls, *, user_id, name, title=None, description=None,
-                         thumbnail_url="", state=None, city=None, district=None,
-                         address=None, price=None, status="unlisted", rules=None,
-                         features=None, num_bedrooms=None, num_bathrooms=None,
-                         land_size=None):
-        """Create a Residence in one step."""
+                        thumbnail_url="", state=None, city=None, district=None,
+                        address=None, price=None, status="unlisted", rules=None,
+                        features=None, num_bedrooms=None, num_bathrooms=None,
+                        land_size=None, residence_type=None):
+        """
+        Create a Residence in one step.
+        """
         new_residence = cls(
             user_id=user_id,
             name=name,
@@ -202,7 +205,8 @@ class Residence(Property):
             features=features,
             num_bedrooms=num_bedrooms,
             num_bathrooms=num_bathrooms,
-            land_size=land_size
+            land_size=land_size,
+            residence_type=residence_type
         )
         db.session.add(new_residence)
         db.session.commit()

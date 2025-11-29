@@ -36,35 +36,34 @@ class _LocationPickerState extends State<LocationPicker> {
 
 
   void _validateAndInitialize() {
-
+    // Initialize state
     if (widget.initialState != null &&
         LocationData.states.contains(widget.initialState)) {
-      _state = widget.initialState;
-      _districts = LocationData.locationData[_state!]!.keys.toList();
+      _state = widget.initialState!;
+      _districts = LocationData.locationData[_state]?.keys.toList() ?? [];
     } else {
-        _state = null;
-        _districts = [];
-        _district = null;
-        _cities = [];
-        _city = null;
-      return;
-    }
-
-    if (widget.initialDistrict != null &&
-        _districts.contains(widget.initialDistrict)) {
-      _district = widget.initialDistrict;
-      _cities = LocationData.locationData[_state!]![_district!]!;
-    } else {
+      _state = null;
+      _districts = [];
       _district = null;
       _cities = [];
       _city = null;
       return;
     }
 
+    // Initialize district
+    if (widget.initialDistrict != null && _districts.contains(widget.initialDistrict)) {
+      _district = widget.initialDistrict!;
+      _cities = LocationData.locationData[_state]?[_district] ?? [];
+    } else {
+      _district = null;
+      _city = null;
+      _cities = [];
+      return;
+    }
 
-    if (widget.initialCity != null &&
-        _cities.contains(widget.initialCity)) {
-      _city = widget.initialCity;
+    // Initialize city
+    if (widget.initialCity != null && _cities.contains(widget.initialCity)) { //have logic issue
+      _city = widget.initialCity!;
     } else {
       _city = null;
     }
@@ -130,6 +129,7 @@ class _LocationPickerState extends State<LocationPicker> {
                       _city = null;
                       _cities = [];
                     } else {
+                      _city = null;
                       if(LocationData.locationData.containsKey(_state) && LocationData.locationData[_state]!.containsKey(value)){
                         _cities = LocationData.locationData[_state!]![value]!;
                       }               
@@ -137,9 +137,7 @@ class _LocationPickerState extends State<LocationPicker> {
                         _cities = [];
                       }
 
-
-
-                      _city = null;
+                      
                     }
 
                     _triggerCallback();

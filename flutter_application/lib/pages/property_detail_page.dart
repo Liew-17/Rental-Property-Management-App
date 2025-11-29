@@ -70,7 +70,9 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
           }
 
           final residence = snapshot.data!;
-          listOfUrls = residence.gallery??[];
+          final listOfUrls = (residence.gallery ?? [])
+            .map((item) => ApiService.buildImageUrl(item))
+            .toList();
 
           return Stack(
             children: [

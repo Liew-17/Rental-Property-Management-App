@@ -11,11 +11,12 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     final providers = [EmailAuthProvider()];
 
 
     void onSignedIn() {
-      Navigator.pushReplacementNamed(context, '/profile');
+      Navigator.pushReplacementNamed(context, '/');
     }
 
     void onRegister(){
@@ -23,16 +24,26 @@ class LoginPage extends StatelessWidget {
     }
 
     Future<void> handleAuthState(BuildContext context, User user) async {
+
       try {
           final url = ApiService.buildUri('/auth/check/${user.uid}');
           final response = await http.get(url);
 
           final data = jsonDecode(response.body);
+    
           bool exists = data['exists'] ?? false;
+
 
           if (exists) {
             AppUser appUser = AppUser();
-            appUser.id =  data['id'];
+            final userData = data['user'];
+              appUser.id = userData['id'];
+              appUser.name = userData['name'];
+              appUser.state = userData['state'];
+              appUser.city = userData['city'];
+              appUser.district = userData['district'];
+
+          
             onSignedIn();     
           } else {
             onRegister();

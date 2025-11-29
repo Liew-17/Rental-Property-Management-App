@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/models/user.dart';
+import 'package:flutter_application/services/user_service.dart';
 import 'package:flutter_application/theme.dart';
 import 'location_picker.dart';
 
 
 class LocationHeader extends StatefulWidget {
-  const LocationHeader({super.key});
+  final void Function()? onChanged;
 
+  const LocationHeader({super.key, this.onChanged});
+  
   @override
   State<LocationHeader> createState() => _LocationHeaderState();
 }
@@ -29,15 +32,16 @@ class _LocationHeaderState extends State<LocationHeader> {
     String tempDistrict = _district;
     String tempCity = _city;
 
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text("Change Location"),
           content: LocationPicker(
-            initialState: _state,
-            initialDistrict: _district,
-            initialCity: _city,
+            initialState: AppUser().state,
+            initialDistrict: AppUser().district, // if issue, check here first
+            initialCity: AppUser().city,
             onChanged: (state, district, city) {
               tempState = state ?? '';
               tempDistrict = district ?? '';
@@ -50,14 +54,24 @@ class _LocationHeaderState extends State<LocationHeader> {
               child: const Text("Cancel"),
             ),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _state = tempState;
-                  _district = tempDistrict;
-                  _city = tempCity;
-                }); // refresh header display
-                //TODO: update user state
-                Navigator.of(context).pop();
+              onPressed: () async {
+                if(await UserService.updateLocation( state: tempState, city: tempCity, district: tempDistrict)){
+
+                  setState(() {
+                    _state = tempState;
+                    _district = tempDistrict;
+                    _city = tempCity;
+                  }); // refresh header display
+
+                  widget.onChanged?.call();
+                }
+
+                if(context.mounted){
+                  Navigator.of(context).pop();
+                }
+                
+                
+                
               },
               child: const Text("Save"),
             ),
@@ -97,9 +111,9 @@ class _LocationHeaderState extends State<LocationHeader> {
                         ),
                       ),
                       Text(
-                        _district.isNotEmpty && _city.isNotEmpty
-                            ? "$_district, $_city"
-                            : "",
+                          _district.isNotEmpty?
+                             (_city.isNotEmpty ? "$_district, $_city" : _district)
+                          : "",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[700],

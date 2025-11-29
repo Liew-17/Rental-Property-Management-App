@@ -23,7 +23,8 @@ def add_residence_property(
     features=None,
     num_bedrooms=None,
     num_bathrooms=None,
-    land_size=None
+    land_size=None,
+    residence_type=None, 
 ):
     """
     Create a residence property.
@@ -52,12 +53,13 @@ def add_residence_property(
             district=district,
             address=address,
             price=price,
-            status="listed", # temp test. change to unlisted later
+            status="unlisted", # temp test. change to unlisted later
             rules=rules,
             features=features,
             num_bedrooms=num_bedrooms,
             num_bathrooms=num_bathrooms,
-            land_size=land_size
+            land_size=land_size,
+            residence_type=residence_type
         )
 
         # Handle thumbnail upload
@@ -103,7 +105,8 @@ def get_residence_summaries(*,state=None, city=None, district=None, user_id, pag
             "land_size": prop.land_size,
             "price":prop.price,
             "thumbnail_url": prop.thumbnail_url,
-            "is_favourited": False  # TODO: implement user-specific favoriting logic
+            "is_favourited": False,  # TODO: implement user-specific favoriting logic
+            "residence_type": prop.residence_type,
     })
 
     return summaries, length
@@ -165,6 +168,7 @@ def get_residence_details(property_id, by_uid):
         "num_bedrooms": prop.num_bedrooms,
         "num_bathrooms": prop.num_bathrooms,
         "land_size": float(prop.land_size) if prop.land_size is not None else 0,
+        "residence_type": prop.residence_type,
     }
 
 

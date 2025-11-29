@@ -86,7 +86,11 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            LocationHeader(),
+            LocationHeader(
+              onChanged: () {
+                  _loadPage(1); // Reload page when location changed
+              }
+            ),
             // Search Bar
             Padding(
               padding: const EdgeInsets.all(16.0),

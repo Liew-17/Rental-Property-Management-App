@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/action_button.dart';
 import 'package:flutter_application/models/property.dart';
 import 'package:flutter_application/pages/edit_property_page.dart';
+import 'package:flutter_application/pages/listing_management_page.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/services/property_service.dart';
 
@@ -67,7 +68,15 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
         },
         {'icon': Icons.people, 'label': 'Tenant Record', 'action': () {}},
         {'icon': Icons.chair, 'label': 'Furniture List', 'action': () {}},
-        {'icon': Icons.list_alt, 'label': 'Manage Listing', 'action': () {}},
+        {'icon': Icons.list_alt, 'label': 'Manage Listing', 'action': () {
+              Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    ListingManagementPage(propertyId: widget.propertyId),
+              ),
+            );
+        }},
         {'icon': Icons.report, 'label': 'Reported Issues', 'action': () {}},
       ];
     } else {

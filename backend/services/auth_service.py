@@ -10,6 +10,6 @@ def register(uid, username, role="user"):
 def user_exists(uid):
     user = User.find_by_uid(uid)
     if user:
-        return True, user.id
+        return True, user
     else:
         return False, None

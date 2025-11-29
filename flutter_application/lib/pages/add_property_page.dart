@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/location_picker.dart';
+import 'package:flutter_application/custom_widgets/residence_type_picker.dart';
 import 'package:flutter_application/custom_widgets/section.dart';
 import 'package:flutter_application/theme.dart';
 import 'package:image_picker/image_picker.dart';
@@ -31,6 +32,7 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
   String? _selectedState;
   String? _selectedDistrict;
   String? _selectedCity;
+  String? _selectedResidenceType;
 
   XFile? _thumbnail;
   final picker = ImagePicker();
@@ -71,6 +73,7 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
       request.fields['num_bedrooms'] = int.tryParse(_numBedroomsController.text)?.toString() ?? '0';
       request.fields['num_bathrooms'] = int.tryParse(_numBathroomsController.text)?.toString() ?? '0';
       request.fields['land_size'] = double.tryParse(_landSizeController.text)?.toString() ?? '0';
+      request.fields['residence_type'] = _selectedResidenceType ?? 'Apartment';
       request.fields['features'] = '';
       request.fields['rules'] = '';
 
@@ -228,6 +231,20 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
               ),
             ),
 
+            
+            const SizedBox(height: 30),
+
+            section(
+              "Residence Type",
+              ResidenceTypePicker(
+              onChanged: (value) {
+                  setState(() {
+                    _selectedResidenceType = value;
+                  });
+                },
+              )
+            ),
+
             // Location Section
             section(
               "Location",
@@ -251,6 +268,8 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
                 ],
               ),
             ),
+
+            
 
             const SizedBox(height: 30),
 

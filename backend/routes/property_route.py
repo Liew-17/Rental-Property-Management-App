@@ -20,6 +20,7 @@ def add_residence_property_route():
     num_bedrooms = request.form.get("num_bedrooms")
     num_bathrooms = request.form.get("num_bathrooms")
     land_size = request.form.get("land_size")
+    residence_type = request.form.get("residence_type")
 
     # Thumbnail image
     thumbnail = request.files.get("thumbnail")
@@ -43,7 +44,8 @@ def add_residence_property_route():
         features=features,
         num_bedrooms=num_bedrooms,
         num_bathrooms=num_bathrooms,
-        land_size=land_size
+        land_size=land_size,
+        residence_type=residence_type
     )
 
     if not success:
