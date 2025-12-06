@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/models/user.dart';
+import 'package:flutter_application/pages/request_page.dart';
 import 'package:flutter_application/theme.dart';
 import 'profile_page.dart';
 import 'chat_page.dart';
@@ -21,7 +22,7 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     const HomePage(),
     const MyPropertyPage(),
-    ChatPage(currentUserId: AppUser().id ?? 0,channelId: 1,),
+    RequestPage(requestId: 1,),
     const ProfilePage(),
   ];
 

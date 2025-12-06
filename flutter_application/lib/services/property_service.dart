@@ -10,6 +10,107 @@ import 'package:image_picker/image_picker.dart';
 
 class PropertyService {
 
+  static Future<bool> sendRentRequest({
+    required int userId,
+    required int propertyId,
+    required DateTime startDate,
+    required int duration,
+    required List<XFile> files,       
+  }) async {
+    try {
+      final uri = ApiService.buildUri("/rent/request"); 
+
+      var request = http.MultipartRequest('POST', uri);
+
+      request.fields['user_id'] = userId.toString();
+      request.fields['property_id'] = propertyId.toString();
+      request.fields['start_date'] = startDate.toIso8601String();
+      request.fields['duration_months'] = duration.toString();
+
+      for (var file in files) {
+        final bytes = await file.readAsBytes(); 
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'files[]',
+            bytes,
+            filename: file.name,
+          ),
+        );
+      }
+
+      var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint("Rent request uploaded successfully: $responseBody");
+        return true;
+      } else {
+        debugPrint("Upload failed: ${response.statusCode} -> $responseBody");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("Exception during upload: $e");
+      return false;
+    }
+  }
+
+  static Future<double?> predictProperty({required int propertyId}) async {
+    try {
+      final uri = ApiService.buildUri("/property/residence/predict/$propertyId");
+      
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['predicted_price'] as num).toDouble();
+      } else {
+        debugPrint('Prediction failed: ${response.statusCode} ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Exception during prediction: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> listProperty({
+  required int propertyId,
+  required double price,
+  double? deposit,
+  }) async {
+    try {
+      final uri = ApiService.buildUri("/property/residence/list");
+
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'property_id': propertyId,
+          'price': price,
+          'deposit': deposit,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        debugPrint('Listing failed: ${response.statusCode} ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Exception during property listing: $e');
+      return false;
+    }
+  }
+
+
  static Future<bool> deleteGalleryImage({required int propertyId, required String imageUrl}) async {
     try {
       final uri = ApiService.buildUri("/property/gallery/delete");

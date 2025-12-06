@@ -8,4 +8,4 @@ def serve_file(filename):
     Serve static files (images) from the uploads folder.
     Access via: http://<server_ip>:5000/uploads/properties/...
     """
-    return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)
+    return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename, as_attachment=True,)

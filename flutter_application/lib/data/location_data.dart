@@ -1,42 +1,119 @@
 class LocationData {
-  // List of states in Malaysia
+  // States from your dataset (STATE MEANS)
   static final List<String> states = [
     "Johor",
     "Kedah",
     "Kelantan",
-    "Malacca",
+    "Kuala Lumpur",
+    "Melaka",
     "Negeri Sembilan",
     "Pahang",
     "Penang",
     "Perak",
-    "Perlis",
+    "Putrajaya",
     "Sabah",
     "Sarawak",
     "Selangor",
-    "Terengganu",
-    "Kuala Lumpur",
-    "Labuan",
-    "Putrajaya",
   ];
 
-  // Nested map: State -> District -> List of Cities
+  // Nested map: State -> District -> List of Towns/Cities (from your TOWN MEANS)
   static final Map<String, Map<String, List<String>>> locationData = {
-    "Selangor": {
-      "Petaling": ["Petaling Jaya", "Subang Jaya", "Klang"],
-      "Hulu Langat": ["Kajang", "Semenyih", "Bangi"],
-      "Gombak": ["Batu Caves", "Gombak town"],
+    "Johor": {
+      "Johor Bahru": [
+        "Bandar Johor Bahru",
+        "Tebrau",
+        "Pulai",
+        "Kulai",
+        "Plentong",
+        "Kapar" 
+      ],
+      "Kulaijaya": ["Kulai"],
+      "Muar": ["Muar town", "Tangkak"],
+      "Tangkak": ["Tangkak"],
+      "Kulaijaya (alternate)": ["Labu"] 
+    },
+    "Kedah": {
+      "Kuala Muda": ["Sungai Petani"],
+      "Pendang": ["Pendang"],
+      "Langkawi": ["Padang Masirat"]
+    },
+    "Kelantan": {
+      "Kota Bharu": ["Kota Bharu", "Panji", "Tanjong Keling"],
+      "Bentong": ["Bentong"] 
     },
     "Kuala Lumpur": {
-      "Kuala Lumpur": ["Bukit Bintang", "KLCC", "Segambut"],
+      "Kuala Lumpur": [
+        "Bandar Kuala Lumpur",
+        "Kuala Lumpur",
+        "Setapak",
+        "Bukit Bintang" 
+      ]
     },
-    "Johor": {
-      "Johor Bahru": ["Johor Bahru", "Pasir Gudang", "Kulai"],
-      "Muar": ["Muar town", "Tangkak"],
+    "Melaka": {
+      "Melaka Tengah Central Malacca": [
+        "Bukit Baru",
+        "Bukit Rambai",
+        "Bukit Raya",
+        "Melaka town"
+      ],
+      "Alor Gajah": ["Rembau"] 
+    },
+    "Negeri Sembilan": {
+      "Seremban": ["Bandar Seremban", "Rasah", "Labu"]
+    },
+    "Pahang": {
+      "Kuantan": ["Kuala Kuantan"],
+      "Bentong": ["Bentong"]
     },
     "Penang": {
-      "Seberang Perai": ["Butterworth", "Bukit Mertajam", "Nibong Tebal"],
-      "Penang Island": ["George Town", "Bayan Lepas", "Balik Pulau"],
+  
+      "Barat Daya Southwest Penang": [
+        "Mukim 10",
+        "Mukim 11",
+        "Bukit Balik Pulau",
+        "Bayan Lepas",
+        "Pondok Upeh",
+        "Telok Kumbar"
+      ],
+      "Timur Laut Northeast Penang": [
+        "Bandaraya Georgetown",
+        "Mukim 13",
+        "Mukim 14",
+        "Mukim 15",
+        "Paya Terubong"
+      ],
+      "Central Seberang Perai": [
+        "-"
+      ]
     },
-    // Add other states as needed
+    "Perak": {
+      "Kinta": ["Ulu Kinta", "Kinta"],
+      "Ulu Kinta": ["Ulu Kinta"]
+    },
+    "Putrajaya": {
+      "Putrajaya": ["Putrajaya"]
+    },
+    "Sabah": {
+      "Kota Kinabalu": ["Kota Kinabalu"],
+      "Putatan": ["Putatan"],
+      "Tuaran": ["Tuaran"],
+      "Pondok Upeh (alt)": ["Pondok Upeh"] 
+    },
+    "Sarawak": {
+      "Kuching": ["Kuching"],
+      "Sibu": ["Sibu"]
+    },
+    "Selangor": {
+      "Petaling": ["Petaling Jaya", "Petaling"],
+      "Hulu Langat": ["Kajang", "Semenyih", "Ulu Langat"],
+      "Gombak": ["Batu", "Gombak"],
+      "Klang": ["Bandar Klang", "Klang", "Bukit Raja", "Telok Panglima Garang", "Kapar", "Bandar Klang"],
+      "Kuala Selangor": ["Kuala Selangor", "Ulu Selangor"],
+      "Sepang": ["Sepang"],
+      "Damansara": ["Damansara"],
+      "Rawang": ["Rawang"],
+      "Sungai Buloh": ["Sungai Buloh"],
+      "Ulu Klang": ["Ulu Klang"]
+    },
   };
 }

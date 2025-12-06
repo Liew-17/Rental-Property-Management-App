@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application/custom_widgets/clickable_image.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application/models/message.dart';
@@ -222,13 +223,7 @@ class _ChatPageState extends State<ChatPage> {
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
         children: [
-          Image.network(
-            ApiService.buildImageUrl(msg.messageBody),
-            width: 170,
-            height: 170,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
-          ),
+          ClickableImage(imageUrl: ApiService.buildImageUrl(msg.messageBody), fileName: "flutter_image"),
           const SizedBox(height: 4),
           Text(
             "${msg.sentAt.hour}:${msg.sentAt.minute.toString().padLeft(2, '0')}",

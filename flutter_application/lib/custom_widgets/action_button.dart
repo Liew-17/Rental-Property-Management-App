@@ -22,7 +22,7 @@ class ActionButton extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.primaryColor,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -33,7 +33,7 @@ class ActionButton extends StatelessWidget {
               ],
             ),
             padding: const EdgeInsets.all(16),
-            child: Icon(icon, size: 28, color: AppTheme.primaryColor),
+            child: Icon(icon, size: 28, color: Colors.white),
           ),
           const SizedBox(height: 8),
           Text(label, style: const TextStyle(fontSize: 14)),

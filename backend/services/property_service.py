@@ -3,7 +3,7 @@ from models.property import Property
 from models.property import PropertyImage
 from models.property import Residence
 from database import db
-from services.image_service import upload_image
+from services.file_service import upload_file
 import uuid
 from typing import Optional
 
@@ -18,7 +18,6 @@ def add_residence_property(
     city=None,
     district=None,
     address=None,
-    price=None,
     rules=None,
     features=None,
     num_bedrooms=None,
@@ -52,7 +51,6 @@ def add_residence_property(
             city=city,
             district=district,
             address=address,
-            price=price,
             status="unlisted", # temp test. change to unlisted later
             rules=rules,
             features=features,
@@ -68,7 +66,7 @@ def add_residence_property(
             ext = thumbnail.filename.rsplit('.', 1)[-1].lower()
             filename = f"{uuid.uuid4()}.{ext}"
 
-            thumbnail_url = upload_image(
+            thumbnail_url = upload_file(
                 image=thumbnail,
                 folder=folder_name,
                 filename=filename
@@ -185,7 +183,7 @@ def update_residence(property_id, thumbnail, args):
         ext = thumbnail.filename.rsplit('.', 1)[-1].lower()
         filename = f"{uuid.uuid4()}.{ext}"
 
-        thumbnail_url = upload_image(
+        thumbnail_url = upload_file(
             image=thumbnail,
             folder=folder_name,
             filename=filename
@@ -207,7 +205,7 @@ def add_image(property_id, gallery_image):
         ext = gallery_image.filename.rsplit('.', 1)[-1].lower()
         filename = f"{uuid.uuid4()}.{ext}"
 
-        image_url = upload_image(
+        image_url = upload_file(
             image=gallery_image,
             folder=folder_name,
             filename=filename
@@ -228,3 +226,31 @@ def delete_image(property_id, image_url):
     # add delete of file on server in future.
     return PropertyImage.delete_image_by_url(property_id=property_id,image_url=image_url)
     
+def list_property(property_id, price, deposit):
+    prop = Property.query.get(property_id)
+
+    if not prop:
+        return False, "Property not found"
+
+    if prop.status != "unlisted":
+        return False, "Property is already listed"
+
+    if price is not None:
+        if not isinstance(price, (int, float)):
+            return False, "Invalid price value"
+        elif price == 0:
+            return False, "Price cannot be zero"
+        
+        prop.price = price
+   
+
+    if deposit is not None:
+        if not isinstance(deposit, (int, float)):
+            return False, "Invalid deposit value"
+        
+        prop.deposit = deposit
+        
+    prop.status = "listed"
+    db.session.commit()
+
+    return True, "Property updated successfully"

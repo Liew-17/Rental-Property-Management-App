@@ -46,7 +46,7 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
       debugPrint("Failed to load property: $e");
       setState(() => loading = false);
     }
-  }
+  } 
 
   List<Map<String, dynamic>> getActionButtons(BuildContext context) {
     if (widget.mode == PropertyMode.owned) {

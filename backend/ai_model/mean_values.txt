@@ -1,0 +1,128 @@
+# GLOBAL MEAN
+1286.88
+# STATE MEANS
+johor: 715.68
+kedah: 760.00
+kelantan: 600.00
+kuala lumpur: 2207.15
+melaka: 1260.91
+negeri sembilan: 635.90
+pahang: 638.33
+penang: 798.94
+perak: 766.36
+putrajaya: 1390.00
+sabah: 898.75
+sarawak: 833.33
+selangor: 641.25
+
+# TOWN MEANS
+ampang: 772.67
+bandar: 625.00
+bandar johor bahru: 802.30
+bandar klang: 450.00
+bandar kuala lumpur: 2814.54
+bandar petaling jaya: 660.71
+bandar seremban: 626.67
+bandaraya georgetown: 549.20
+batang kali: 500.00
+batu: 699.41
+bayan lepas: 492.50
+bentong: 640.00
+bukit balik pulau: 500.00
+bukit baru: 1220.95
+bukit raja: 675.00
+bukit rambai: 2100.00
+bukit raya: 450.00
+bukit relau: 793.85
+cheras: 625.00
+damansara: 558.00
+dengkil: 666.30
+jeram: 528.57
+kajang: 550.00
+kapar: 566.67
+klang: 714.55
+kota kinabalu: 1605.00
+kuala jempol: 900.00
+kuala kuantan: 637.50
+kuala lumpur: 831.55
+kuala selangor: 647.33
+kuching: 880.00
+kulai: 500.00
+labu: 643.33
+mukim 10: 1710.00
+mukim 11: 1480.00
+mukim 13: 750.00
+mukim 14: 1000.00
+mukim 15: 556.67
+padang masirat: 676.67
+panji: 600.00
+paya terubong: 600.00
+petaling: 816.21
+plentong: 578.12
+pondok upeh: 1600.00
+pulai: 650.00
+putatan: 650.00
+putrajaya: 1390.00
+rasah: 450.00
+rawang: 500.00
+semenyih: 550.00
+sepang: 560.00
+setapak: 696.36
+sibu: 600.00
+sungai buloh: 689.66
+sungai petani: 962.50
+tangkak: 500.00
+tanjong dua belas: 500.00
+tanjong keling: 599.50
+tebrau: 562.50
+telok kumbar: 1342.73
+telok panglima garang: 900.00
+tuaran: 670.00
+ulu bernam timor dan barat: 700.00
+ulu kelang: 640.91
+ulu kinta: 773.00
+ulu langat: 874.00
+
+# DISTRICT MEANS
+barat daya southwest penang: 988.42
+bentong: 640.00
+central seberang perai: 808.40
+gombak: 603.87
+jempol: 900.00
+johor bahru: 723.49
+kinta: 773.00
+klang: 667.33
+kota bharu: 600.00
+kota kinabalu: 1605.00
+kuala langat: 700.00
+kuala lumpur: 2207.15
+kuala muda: 962.50
+kuala selangor: 609.55
+kuantan: 637.50
+kuching: 880.00
+kulaijaya: 500.00
+langkawi: 676.67
+melaka tengah central malacca: 1260.91
+muallim: 700.00
+muar: 625.00
+pendang: 450.00
+petaling: 640.37
+putatan: 650.00
+putrajaya: 1390.00
+rembau: 599.50
+sepang: 619.79
+seremban: 608.57
+sibu: 600.00
+tangkak: 500.00
+timur laut northeast penang: 559.03
+tuaran: 670.00
+ulu langat: 731.38
+ulu selangor: 500.00
+
+# TYPE MEANS
+apartment: 4255.56
+condo: 2176.88
+house: 6226.92
+penthouse: 781.38
+townhouse: 1330.00
+villa: 12625.00

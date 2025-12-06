@@ -1,4 +1,5 @@
 from flask import Blueprint, json, request, jsonify
+from services.ai_service import predict
 from services import property_service
 
 property_bp = Blueprint("property_bp", __name__, url_prefix="/property")
@@ -176,3 +177,42 @@ def delete_gallery_image():
         return jsonify({"success": True, "message": "Image deleted successfully"})
     else:
         return jsonify({"success": False, "message": "Image not found"})
+    
+
+@property_bp.route("/residence/predict/<int:property_id>", methods=["GET"])
+def predict_property(property_id):
+    success, result = predict(property_id)
+
+    if not success:
+        return jsonify({"error": result}), 404
+
+    return jsonify({
+        "property_id": property_id,
+        "predicted_price": result
+    }), 200
+
+@property_bp.route("/residence/list", methods=["POST"])
+def list_properties_route():
+    data = request.get_json()
+    property_id = data.get("property_id")
+    price = data.get("price")
+    deposit = data.get("deposit")
+
+    if property_id is None or price is None:
+        return jsonify({
+            "success": False,
+            "message": "property_id/price is required"
+        }), 400
+
+    success, data = property_service.list_property(property_id, price, deposit)
+
+    if not success:
+        return jsonify({
+            "success": False,
+            "message": data
+        }), 400
+
+    return jsonify({
+        "success": True,
+        "message": data
+    }), 200

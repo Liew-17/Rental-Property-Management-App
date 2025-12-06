@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/custom_widgets/file_uploader.dart';
 import 'package:flutter_application/models/residence.dart';
 import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/services/api_service.dart';
+import 'package:flutter_application/services/rent_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../theme.dart';
 import 'package:galleryimage/galleryimage.dart';
 import 'package:flutter_application/services/property_service.dart';
@@ -68,7 +72,6 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
           } else if (!snapshot.hasData) {
             return const Center(child: Text("Property not found"));
           }
-
           final residence = snapshot.data!;
           final listOfUrls = (residence.gallery ?? [])
             .map((item) => ApiService.buildImageUrl(item))
@@ -328,7 +331,25 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                         if (!_resolvedViewOnly)
                           ElevatedButton(
                             onPressed: () {
-                              // TODO: rent now action
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return RentRequestDialog(
+                                      onSubmit: (startDate, duration, files) {
+                                        RentService.sendRentRequest(
+                                            propertyId: widget.propertyId,
+                                            userId: AppUser().id!,
+                                            startDate: startDate,
+                                            duration: duration,
+                                            files: files
+                                        );
+
+                                        Navigator.pop(context); // Close the dialog
+                                      },
+                                    );
+                                  },
+                                );
+
                             },
                             style: AppTheme.primaryButton,
                             child: const Text('Rent Now'),
@@ -344,4 +365,136 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
       ),
     );
   }
+
+
 }
+
+class RentRequestDialog extends StatefulWidget {
+  final void Function(DateTime startDate, int duration, List<XFile> files) onSubmit;
+
+  const RentRequestDialog({super.key, required this.onSubmit});
+
+  @override
+  State<RentRequestDialog> createState() => _RentRequestDialogState();
+}
+
+class _RentRequestDialogState extends State<RentRequestDialog> {
+  DateTime? _startDate;
+  int _duration = 1;
+  List<XFile> _files = [];
+
+  final int _maxAdvanceDays = 15;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final firstDate = now.add(const Duration(days: 1));
+    final lastDate = now.add(Duration(days: _maxAdvanceDays));
+
+    return AlertDialog(
+      title: const Text("Rent Request"),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Start Date picker
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text("Start Date"),
+              subtitle: Text(_startDate != null
+                  ? DateFormat('yyyy-MM-dd').format(_startDate!)
+                  : "Select a date"),
+              trailing: const Icon(Icons.calendar_today),
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: firstDate,
+                  firstDate: firstDate,
+                  lastDate: lastDate,
+                );
+                if (picked != null) {
+                  setState(() {
+                    _startDate = picked;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Duration (months)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Label on the left
+                Flexible(
+                  child: Text(
+                    "Duration (months):",
+                    softWrap: true,
+                  ),
+                ),
+
+                // Duration + buttons on the right
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () {
+                        if (_duration > 1) {
+                          setState(() {
+                            _duration--;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      "$_duration",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 16),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        setState(() {
+                          _duration++;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            
+            // File upload widget
+            XFileUploadWidget(
+              onFilesChanged: (files) {
+                setState(() {
+                  _files = files;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: _startDate == null || _files.isEmpty
+              ? null
+              : () {
+                  widget.onSubmit(_startDate!, _duration, _files);
+                },
+          style: AppTheme.primaryButton,
+          child: const Text("Submit Rent Request"),
+          
+        ),
+      ],
+    );
+  }
+}
+

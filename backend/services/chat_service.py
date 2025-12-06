@@ -1,6 +1,7 @@
 from datetime import datetime
-from services.image_service import upload_image
+from services.file_service import upload_file
 from models.message import Message
+import database as db
 
 def create_image_message(sender_id: int, channel_id: int, image_file=None):
     """
@@ -19,7 +20,7 @@ def create_image_message(sender_id: int, channel_id: int, image_file=None):
 
         folder = f"messages/{channel_id}"
 
-        image_url = upload_image(
+        image_url = upload_file(
             image=image_file,
             folder=folder,
             filename=filename

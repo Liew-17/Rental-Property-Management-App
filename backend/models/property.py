@@ -17,12 +17,16 @@ class Property(db.Model):
     city = db.Column(db.String(100), nullable=True)
     district = db.Column(db.String(100), nullable=True)
     address = db.Column(db.String(255), nullable=True)  # Remaining address details
-    price = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(50), nullable=True) # "listed", "unlisted", "rented" 
     rules = db.Column(db.Text, nullable=True)        
     features = db.Column(db.Text, nullable=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)  # Link property to user
+
+    price = db.Column(db.Float, nullable=True)
+    deposit = db.Column(db.Float, nullable=True)
+    required_deposit = db.Column(db.Boolean, default=False, nullable=False)
+
 
     user = db.relationship(
         "User",
@@ -47,7 +51,6 @@ class Property(db.Model):
         city=None,
         district=None,
         address=None,
-        price=None,
         status= "unlisted",
         rules = None,       
         features = None
@@ -64,7 +67,8 @@ class Property(db.Model):
             city=city,
             district=district,
             address=address,
-            price=price,
+            price= None,
+            deposit = None,
             status=status,
             rules=rules,
             features=features
