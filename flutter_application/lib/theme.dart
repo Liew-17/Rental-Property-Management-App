@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // Colors
   static const Color primaryColor = Color.fromARGB(255, 1, 103, 124);
-  static const Color secondaryColor = Color.fromARGB(255, 237, 248, 255);
+  static const Color secondaryColor = Color(0xFFFAFAFA);
   static const Color backgroundColor = Colors.white;
   static const Color accentColor = Colors.blueAccent;
   static const Color favoritedColor = Color.fromARGB(255, 255, 0, 111);
@@ -31,4 +31,37 @@ class AppTheme {
     ),
     textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
   );
+
+  static Color getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      // Success / Active
+      case 'listed':
+      case 'active':
+      case 'completed':
+      case 'approved':
+      case 'paid':
+        return Colors.green;
+
+      // Ongoing / Info
+      case 'rented':
+        return Colors.blue;
+
+      // Warnings / Pending
+      case 'unlisted':
+      case 'pending':
+        return Colors.orange;
+
+      // Errors / Stopped
+      case 'rejected':
+      case 'terminated':
+        return Colors.red;
+
+      default:
+        return Colors.grey;
+    }
+  }
+
+  
+
+  
 }

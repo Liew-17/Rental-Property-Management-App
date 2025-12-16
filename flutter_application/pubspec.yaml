@@ -48,11 +48,14 @@ dependencies:
   flutter_chat_types: ^3.3.0
   flyer_chat_image_message: ^2.0.0
   http: ^1.0.0
-  file_picker: ^6.1.0   
+  file_picker: ^8.1.4  
   cross_file: ^0.3.5 
   intl: ^0.20.2 
-  downloads_path_provider: ^0.0.1
-
+  path_provider: ^2.1.5
+  pdfrx: 2.2.16
+  syncfusion_flutter_pdfviewer: ^31.2.18
+  url_launcher: ^6.3.2
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

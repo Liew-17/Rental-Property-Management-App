@@ -4,27 +4,35 @@ import 'package:cross_file/cross_file.dart';
 
 class XFileUploadWidget extends StatefulWidget {
   final void Function(List<XFile>)? onFilesChanged;
+  final int maxFiles; 
 
-  const XFileUploadWidget({super.key, this.onFilesChanged});
+  const XFileUploadWidget({
+    super.key,
+    this.onFilesChanged,
+    this.maxFiles = 5, // default fallback
+  });
 
   @override
-  // ignore: library_private_types_in_public_api
-  _XFileUploadWidgetState createState() => _XFileUploadWidgetState();
+  State<XFileUploadWidget> createState() => _XFileUploadWidgetState();
 }
 
 class _XFileUploadWidgetState extends State<XFileUploadWidget> {
   final List<XFile> _selectedFiles = [];
 
   Future<void> _pickFiles() async {
+    if (_selectedFiles.length >= widget.maxFiles) {
+      _showLimitWarning();
+      return;
+    }
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: ['jpg', 'png', 'pdf'],
-      withData: true, // important for web to get bytes
+      withData: true,
     );
 
     if (result != null) {
-      // Convert PlatformFile -> XFile
       List<XFile> files = result.files.map((pf) {
         if (pf.bytes != null) {
           return XFile.fromData(pf.bytes!, name: pf.name);
@@ -35,23 +43,38 @@ class _XFileUploadWidgetState extends State<XFileUploadWidget> {
         }
       }).toList();
 
-      setState(() {
-        _selectedFiles.addAll(files);
-      });
-
-      if (widget.onFilesChanged != null) {
-        widget.onFilesChanged!(_selectedFiles);
+      // Prevent exceeding max
+      int availableSlots = widget.maxFiles - _selectedFiles.length;
+      if (files.length > availableSlots) {
+        files = files.take(availableSlots).toList();
+        _showLimitWarning();
       }
+
+      setState(() => _selectedFiles.addAll(files));
+      widget.onFilesChanged?.call(_selectedFiles);
     }
   }
 
   void _removeFile(int index) {
-    setState(() {
-      _selectedFiles.removeAt(index);
-    });
-    if (widget.onFilesChanged != null) {
-      widget.onFilesChanged!(_selectedFiles);
-    }
+    setState(() => _selectedFiles.removeAt(index));
+    widget.onFilesChanged?.call(_selectedFiles);
+  }
+
+  // Reusable popup
+  void _showLimitWarning() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("File Limit Reached"),
+        content: Text("You can upload maximum ${widget.maxFiles} files."),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK")
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -62,22 +85,37 @@ class _XFileUploadWidgetState extends State<XFileUploadWidget> {
         ElevatedButton.icon(
           onPressed: _pickFiles,
           icon: const Icon(Icons.upload_file),
-          label: const Text("Pick Files"),
+          label: Text("Pick Files (${_selectedFiles.length}/${widget.maxFiles})"),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
+
+        // File list UI
         ..._selectedFiles.asMap().entries.map((entry) {
           int index = entry.key;
           XFile file = entry.value;
-          return ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.insert_drive_file),
-            title: Text(file.name),
-            trailing: IconButton(
-              icon: const Icon(Icons.close, color: Colors.red),
-              onPressed: () => _removeFile(index),
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.insert_drive_file, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(file.name, overflow: TextOverflow.ellipsis),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  onPressed: () => _removeFile(index),
+                ),
+              ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

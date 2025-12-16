@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application/models/user.dart';
-import 'package:flutter_application/pages/request_page.dart';
+import 'package:flutter_application/pages/channel_list_page.dart';
+import 'package:flutter_application/pages/my_request_page.dart';
+import 'package:flutter_application/pages/request_list_page.dart';
 import 'package:flutter_application/theme.dart';
 import 'profile_page.dart';
-import 'chat_page.dart';
 import 'my_property_page.dart';
 import 'home_page.dart';
 
@@ -22,7 +22,7 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     const HomePage(),
     const MyPropertyPage(),
-    RequestPage(requestId: 1,),
+    const ChannelListPage(),
     const ProfilePage(),
   ];
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
+import 'package:flutter_application/pages/main_page.dart';
+import 'package:flutter_application/pages/register_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application/services/api_service.dart';
 import 'dart:convert';
@@ -16,11 +18,20 @@ class LoginPage extends StatelessWidget {
 
 
     void onSignedIn() {
-      Navigator.pushReplacementNamed(context, '/');
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainPage()),
+        (route) => false,
+      );
     }
 
     void onRegister(){
-      Navigator.pushReplacementNamed(context, '/register');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const RegisterPage(),
+        ),
+      );
     }
 
     Future<void> handleAuthState(BuildContext context, User user) async {
@@ -38,10 +49,12 @@ class LoginPage extends StatelessWidget {
             AppUser appUser = AppUser();
             final userData = data['user'];
               appUser.id = userData['id'];
-              appUser.name = userData['name'];
+              appUser.name = userData['username'];
               appUser.state = userData['state'];
               appUser.city = userData['city'];
               appUser.district = userData['district'];
+              appUser.email = userData['email'];
+              appUser.profilePicUrl = userData['profilePicUrl'];
 
           
             onSignedIn();     

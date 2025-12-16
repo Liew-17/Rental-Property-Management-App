@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from services.chat_service import create_image_message, create_text_message, get_messages
+from services import chat_service
 
 chat_bp = Blueprint("chat_bp", __name__, url_prefix="/chat")
 
@@ -18,7 +18,7 @@ def send_image_message():
             return jsonify({"success": False, "message": "No image file provided"}), 400
 
         # Call the service
-        success, message, msg_obj = create_image_message(
+        success, message, msg_obj = chat_service.create_image_message(
             sender_id=sender_id,
             channel_id=channel_id,
             image_file=image_file
@@ -56,7 +56,7 @@ def send_text_message():
     if sender_id is None or channel_id is None or not message_body:
         return jsonify({"success": False, "message": "Missing required parameters"}), 400
 
-    success, message, msg_obj = create_text_message(
+    success, message, msg_obj = chat_service.create_text_message(
         sender_id=sender_id,
         channel_id=channel_id,
         message_body=message_body
@@ -92,7 +92,7 @@ def api_get_messages():
         }), 400
 
     # Fetch messages
-    success, message, messages = get_messages(
+    success, message, messages = chat_service.get_messages(
         channel_id=channel_id,
         limit=limit,
         offset=offset
@@ -119,3 +119,49 @@ def api_get_messages():
         "messages": result
     }), 200
 
+@chat_bp.route("/initiate", methods=["POST"])
+def initiate_channel_route():
+    data = request.get_json()
+
+    property_id = data.get("property_id")
+    tenant_id = data.get("tenant_id")
+    channel_type = data.get("type", "query") #default searching query
+
+    if not property_id or not tenant_id:
+        return jsonify({"success": False, "message": "Missing property_id or tenant_id"}), 400
+
+    success, message, channel = chat_service.initiate_channel(property_id, tenant_id, channel_type)
+
+    if success:
+        return jsonify({
+            "success": True, 
+            "message": message,
+            "channel": channel
+        }), 200
+    else:
+        return jsonify({"success": False, "message": message}), 400
+    
+
+    
+@chat_bp.route("/list/<int:user_id>", methods=["GET"])
+def get_user_channels_route(user_id):
+    success, message, channels = chat_service.get_user_channels(user_id)
+
+    if success:
+        return jsonify({"success": True, "channels": channels}), 200
+    else:
+        return jsonify({"success": False, "message": message}), 400
+    
+@chat_bp.route("/lease/<int:lease_id>", methods=["GET"])
+def get_channel_by_lease_route(lease_id):
+    success, message, channel_data = chat_service.get_channel_by_lease_id(lease_id)
+
+    if success:
+        return jsonify({
+            "success": True, 
+            "message": message,
+            "channel": channel_data
+        }), 200
+    else:
+        return jsonify({"success": False, "message": message}), 400
+ 

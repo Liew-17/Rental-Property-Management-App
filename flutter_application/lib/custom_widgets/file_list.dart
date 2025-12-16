@@ -1,24 +1,18 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_application/custom_widgets/file_preview_page.dart';
 import 'package:flutter_application/models/request.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:web/web.dart' as html;
-import 'dart:typed_data';
-import 'package:http/http.dart' as http;
-import 'dart:js_interop'; // For JSArray
-import 'dart:typed_data'; // For Uint8List
-import 'package:web/web.dart' as web;
-
-
-
+import 'package:flutter_application/custom_widgets/file_preview_page.dart'; // Import the new page
 
 class FileList extends StatefulWidget {
   final List<RequestDocument> files;
-  final bool shrinkWrap; // new
-  final ScrollPhysics? physics; // new
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
 
   const FileList({
     super.key,
@@ -36,66 +30,84 @@ class _FileListState extends State<FileList> {
 
   Future<void> _downloadFile(RequestDocument file) async {
     final fileName = file.originalFilename;
-    final fileUrl = ApiService.buildImageUrl(file.fileUrl);
+    final fileUrl = ApiService.buildFileUrl(file.fileUrl, download: true);
 
     if (kIsWeb) {
       final anchor = html.HTMLAnchorElement()
-        ..href = fileUrl 
-        ..setAttribute("download", fileName)          
+        ..href = fileUrl
+        ..setAttribute("download", fileName)
         ..click();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$fileName download started (web)')),
+        SnackBar(content: Text('$fileName download started')),
       );
     } else {
-        try {
-          Directory? downloadsDir;
+      try {
+        Directory? downloadsDir;
 
-          if (Platform.isAndroid) {
-            downloadsDir = await getExternalStorageDirectory();
+        if (Platform.isAndroid) {
+          downloadsDir = await getExternalStorageDirectory();
+          if (downloadsDir != null) {
 
-            if (downloadsDir != null) {
-              downloadsDir = Directory('${downloadsDir.parent.parent.parent.parent.path}/Download');
-              if (!await downloadsDir.exists()) {
-                await downloadsDir.create(recursive: true);
-              }
+            final path = downloadsDir.path.split("Android")[0];
+            downloadsDir = Directory('$path/Download');
+            if (!await downloadsDir.exists()) {
+               downloadsDir = await getExternalStorageDirectory();
             }
-          } else if (Platform.isIOS) {
-            downloadsDir = await getApplicationDocumentsDirectory();
           }
-
-          if (downloadsDir == null) throw Exception("Cannot access storage");
-
-          final filePath = '${downloadsDir.path}/$fileName';
-          final dio = Dio();
-
-          await dio.download(
-            fileUrl,
-            filePath,
-            onReceiveProgress: (received, total) {
-              if (total != -1) {
-                debugPrint("Progress: ${(received / total * 100).toStringAsFixed(0)}%");
-              }
-            },
-          );
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Downloaded $fileName to ${downloadsDir.path}')),
-            );
-          }
-
-        } catch (e) {
-          debugPrint("Error downloading file: $e");
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to download file: $e')),
-            );
-          }
+        } else if (Platform.isIOS) {
+          downloadsDir = await getApplicationDocumentsDirectory();
         }
 
-      
+        if (downloadsDir == null) throw Exception("Cannot access storage");
+
+        final filePath = '${downloadsDir.path}/$fileName';
+        final dio = Dio();
+
+        await dio.download(
+          fileUrl,
+          filePath,
+          onReceiveProgress: (received, total) {
+            if (total != -1) {
+              setState(() {
+                _progress[file.fileUrl] = received / total;
+              });
+            }
+          },
+        );
+        
+        if (mounted) {
+           setState(() {
+            _progress.remove(file.fileUrl); // Clear progress when done
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Downloaded to ${downloadsDir.path}')),
+          );
+        }
+      } catch (e) {
+        debugPrint("Error downloading file: $e");
+        if (mounted) {
+           setState(() {
+            _progress.remove(file.fileUrl);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to download file: $e')),
+          );
+        }
+      }
     }
+  }
+  
+  void _openPreview(RequestDocument file) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FilePreviewPage(
+          fileUrl: file.fileUrl,
+          fileName: file.originalFilename,
+        ),
+      ),
+    );
   }
 
   @override
@@ -104,53 +116,60 @@ class _FileListState extends State<FileList> {
       return const Center(child: Text("No files available."));
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: widget.files.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      shrinkWrap: widget.shrinkWrap,
-      physics: widget.physics,
-      itemBuilder: (context, index) {
-        final file = widget.files[index];
+    return Column(
+      children: widget.files.map((file) {
         final progress = _progress[file.fileUrl];
+        final isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+            .contains(file.fileFormat.toLowerCase());
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: (0.05)),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Icon(
+                isImage ? Icons.image : Icons.insert_drive_file,
+                color: Colors.grey[700],
+                size: 24,
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   file.originalFilename,
-                  style: const TextStyle(fontSize: 16),
                   overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
               ),
+              
+              // === Preview Button ===
+              IconButton(
+                icon: const Icon(Icons.visibility_outlined),
+                color: Colors.blueGrey,
+                tooltip: "Preview",
+                onPressed: () => _openPreview(file),
+              ),
+              
+              // === Download Button or Progress ===
               progress != null
                   ? SizedBox(
-                      width: 80,
-                      child: LinearProgressIndicator(value: progress),
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(value: progress, strokeWidth: 3),
                     )
                   : IconButton(
-                      icon: const Icon(Icons.download),
+                      icon: const Icon(Icons.download_rounded),
                       color: Colors.blue,
+                      tooltip: "Download",
                       onPressed: () => _downloadFile(file),
                     ),
             ],
           ),
         );
-      },
+      }).toList(),
     );
   }
 }

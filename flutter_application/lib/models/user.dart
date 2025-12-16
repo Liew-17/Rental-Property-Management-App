@@ -10,6 +10,7 @@ class AppUser {
   int? id;
   String? name;
   String? email;
+  String? profilePicUrl;
 
   // Location fields
   String? state;
@@ -23,6 +24,7 @@ class AppUser {
     id = null;
     name = null;
     email = null;
+    profilePicUrl = null; // <--- Reset this field
 
     // Reset location
     state = null;
@@ -30,3 +32,4 @@ class AppUser {
     district = null;
   }
 }
+

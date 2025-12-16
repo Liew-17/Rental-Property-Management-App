@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/file_uploader.dart';
+import 'package:flutter_application/data/features_data.dart';
 import 'package:flutter_application/models/residence.dart';
 import 'package:flutter_application/models/user.dart';
+import 'package:flutter_application/pages/chat_page.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/services/rent_service.dart';
+import 'package:flutter_application/services/user_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../theme.dart';
@@ -27,8 +30,6 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
 
   bool _resolvedViewOnly = true; 
 
-  List<String> listOfUrls = []; 
-
   @override
   void initState() {
     super.initState();
@@ -36,21 +37,37 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
 
     // Fetch the residence details
     _residenceFuture = PropertyService.getDetails(widget.propertyId);
+    
 
     _residenceFuture.then((residence) {
-      setState(() {
-        _resolvedViewOnly = widget.viewOnly ? true : (residence.ownerId == AppUser().id); // check if it is owned by the current user
-      }); 
+      if (mounted) {
+        setState(() {
+          // Check if viewed by owner
+          _resolvedViewOnly = widget.viewOnly ? true : (residence.ownerId == AppUser().id); 
+        }); 
+      }
     });
-
   }
 
-  Widget _infoTile(IconData icon, String label) {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Widget _infoTile(IconData icon, String label, String subLabel) {
     return Column(
       children: [
-        Icon(icon, color: AppTheme.primaryColor),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Icon(icon, color: AppTheme.primaryColor, size: 28),
+        const SizedBox(height: 8),
+        Text(
+          label, 
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+        ),
+        Text(
+          subLabel, 
+          style: TextStyle(color: Colors.grey[600], fontSize: 12)
+        ),
       ],
     );
   }
@@ -65,33 +82,48 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
         future: _residenceFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Loading indicator
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           } else if (!snapshot.hasData) {
             return const Center(child: Text("Property not found"));
           }
+          
           final residence = snapshot.data!;
           final listOfUrls = (residence.gallery ?? [])
             .map((item) => ApiService.buildImageUrl(item))
             .toList();
+
+          // Parse amenities (features)
+          List<String> amenities = [];
+          if (residence.features != null && residence.features!.isNotEmpty) {
+            amenities = residence.features!.split('|');
+          }
 
           return Stack(
             children: [
               // Scrollable content
               CustomScrollView(
                 slivers: [
+                  // --- App Bar Image ---
                   SliverAppBar(
                     expandedHeight: screenHeight * 0.4,
                     pinned: true,
                     backgroundColor: Colors.white,
+                    leading: Container(
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const BackButton(color: Colors.white),
+                    ),
                     flexibleSpace: FlexibleSpaceBar(
                       background: Stack(
                         fit: StackFit.expand,
                         children: [
-                          residence.thumbnailUrl != null?
-                              Image.network(
+                          residence.thumbnailUrl != null && residence.thumbnailUrl!.isNotEmpty
+                              ? Image.network(
                                   ApiService.buildImageUrl(residence.thumbnailUrl!),
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
@@ -106,23 +138,27 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                               : Container(
                                       color: Colors.grey[300],
                                       child: const Center(
-                                        child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                                        child: Icon(Icons.image, size: 40, color: Colors.grey),
                                       ),
                                 ),
+                          // Favorite Button
                           Positioned(
                             top: 40,
                             right: 20,
                             child: CircleAvatar(
-                              backgroundColor: Colors.white.withAlpha((0.7 * 255).toInt()),
+                              backgroundColor: Colors.white.withOpacity(0.8),
                               child: IconButton(
                                 onPressed: () {
-                                  // TODO: favorite toggle
+                                  setState(() {
+                                    residence.isFavourited = !residence.isFavourited;
+                                    UserService.toggleFavourite(residence.id);   
+                                  });
                                 },
                                 icon: Icon(
-                                  residence.isFavorited
+                                  residence.isFavourited
                                       ? Icons.favorite
                                       : Icons.favorite_border,
-                                  color: AppTheme.primaryColor,
+                                  color: AppTheme.favoritedColor,
                                 ),
                               ),
                             ),
@@ -131,231 +167,403 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                       ),
                     ),
                   ),
+
+                  // --- Content ---
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            residence.name,
-                            style: AppTheme.heading1.copyWith(fontSize: 24),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        
+                        // 1. Header Section (Padded)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.location_on,
-                                  color: AppTheme.primaryColor, size: 18),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  residence.address ?? "",
-                                  style: const TextStyle(color: Colors.black54),
+                              // Title
+                              Text(
+                                residence.title??"No Title",
+                                style: const TextStyle(
+                                  fontSize: 24, 
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Icon(Icons.star, color: AppTheme.primaryColor, size: 18),
-                              const SizedBox(width: 4),
-                              Text(residence.status ?? "",
-                                  style: const TextStyle(fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              const CircleAvatar(
-                                radius: 20,
-                                backgroundColor: Colors.grey,
-                                child: Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  residence.ownerName ?? "",
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              if (!_resolvedViewOnly)
-                                ElevatedButton(
-                                  onPressed: () {
-                                    // TODO: contact owner
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryColor,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                              const SizedBox(height: 8),
+                              
+                              // Address
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.location_on,
+                                      color: AppTheme.primaryColor, size: 18),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      [residence.address, residence.district, residence.city, residence.state]
+                                          .where((s) => s != null && s.isNotEmpty)
+                                          .join(", "),
+                                      style: TextStyle(color: Colors.grey[700], height: 1.3),
                                     ),
-                                    padding: const EdgeInsets.all(12),
                                   ),
-                                  child: const Icon(
-                                    Icons.chat,
-                                    color: Colors.white,
-                                  ),
-                                )
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          TabBar(
-                            controller: _tabController,
-                            labelColor: AppTheme.primaryColor,
-                            unselectedLabelColor: Colors.black54,
-                            indicatorColor: AppTheme.primaryColor,
-                            tabs: const [
-                              Tab(text: 'Info'),
-                              Tab(text: 'Gallery'),
-                              Tab(text: 'Amenities'),
-                              Tab(text: 'Rules'),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 600,
-                            child: TabBarView(
-                              controller: _tabController,
-                              children: [
-                                // Info Section
-                                SingleChildScrollView(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
+                                ],
+                              ),
+                              
+                              const SizedBox(height: 24),
+                              
+                              // Owner Profile Placeholder
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!)
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 24,
+                                      backgroundColor: Colors.grey[300], 
+                                      backgroundImage: (residence.ownerPicUrl != null && residence.ownerPicUrl!.isNotEmpty)
+                                          ? NetworkImage(ApiService.buildImageUrl(residence.ownerPicUrl!))
+                                          : null, 
+                                      child: (residence.ownerPicUrl == null || residence.ownerPicUrl!.isEmpty)
+                                          ? const Icon(Icons.person, color: Colors.white, size: 28)
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          _infoTile(Icons.bed,
-                                              '${residence.numBedrooms ?? '-'} Beds'),
-                                          _infoTile(Icons.bathtub,
-                                              '${residence.numBathrooms ?? '-'} Baths'),
-                                          _infoTile(Icons.square_foot,
-                                              '${residence.landSize ?? '-'} sqft'),
+                                          Text(
+                                            residence.ownerName ?? "Property Owner",
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                          ),
+                                          const Text(
+                                            "Landlord",
+                                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                                          ),
                                         ],
                                       ),
-                                      const SizedBox(height: 20),
-                                      Text(
-                                        residence.description ?? "",
-                                        style: const TextStyle(height: 1.5),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    if (!_resolvedViewOnly)
+                                      IconButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ChatPage(
+                                                propertyId: residence.id, 
+                                                tenantId: AppUser().id!, 
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.chat_bubble_outline),
+                                        color: AppTheme.primaryColor,
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                                        ),
+                                      )
+                                  ],
                                 ),
-
-                                // Gallery Section
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 20.0, left: 10, right: 10),
-                                  child: GalleryImage(
-                                    imageUrls: listOfUrls,
-                                    numOfShowImages: listOfUrls.length > 6
-                                        ? 6
-                                        : listOfUrls.length,
-                                    galleryBackgroundColor:
-                                        AppTheme.backgroundColor,
-                                    titleGallery: "",
-                                  ),
-                                ),
-
-                                // Amenities Section
-                                Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: const [
-                                      Text('Amenities:',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      SizedBox(height: 12),
-                                      Text('- Wi-Fi'),
-                                      Text('- Air Conditioning'),
-                                      Text('- Parking'),
-                                      Text('- Swimming Pool'),
-                                    ],
-                                  ),
-                                ),
-
-                                // Rules Section
-                                Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: const Text(
-                                    'Rules and Terms:\n\n'
-                                    '- No smoking\n'
-                                    '- No pets\n'
-                                    '- Minimum 6 months stay\n'
-                                    '- Security deposit required',
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 100),
-                        ],
-                      ),
+                        ),
+
+                        // 2. TabBar (Full Width - No Horizontal Padding)
+                        TabBar(
+                          controller: _tabController,
+                          labelColor: AppTheme.primaryColor,
+                          unselectedLabelColor: Colors.grey,
+                          indicatorColor: AppTheme.primaryColor,
+                          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          tabs: const [
+                            Tab(text: 'Info'),
+                            Tab(text: 'Gallery'),
+                            Tab(text: 'Features'),
+                            Tab(text: 'Rules'),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 20),
+
+                        // 3. Tab Views
+                        SizedBox(
+                          height: 400, // Fixed height for tab content area
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              // --- Info Tab ---
+                              SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[50],
+                                        borderRadius: BorderRadius.circular(16)
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          _infoTile(Icons.bed, '${residence.numBedrooms ?? '-'}', 'Bedrooms'),
+                                          Container(width: 1, height: 40, color: Colors.grey[300]),
+                                          _infoTile(Icons.bathtub, '${residence.numBathrooms ?? '-'}', 'Bathrooms'),
+                                          Container(width: 1, height: 40, color: Colors.grey[300]),
+                                          _infoTile(Icons.square_foot, 
+                                            residence.landSize != null ? '${residence.landSize!.toStringAsFixed(0)}' : '-', 
+                                            'Sqft'
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    const Text(
+                                      "Description",
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      residence.description ?? "No description provided.",
+                                      style: TextStyle(height: 1.6, color: Colors.grey[800]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // --- Gallery Tab ---
+                              listOfUrls.isEmpty 
+                                ? Container(
+                                    alignment: Alignment.center,
+                                    child: const Text("No images available")
+                                  )
+                                : Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                                    child: GalleryImage(
+                                      imageUrls: listOfUrls,
+                                      numOfShowImages: listOfUrls.length,
+                                      galleryBackgroundColor: Colors.white,
+                                      titleGallery: "",
+                                    ),
+                                  ),
+
+                              // --- Features (Amenities) Tab ---
+                              SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                                child: amenities.isEmpty 
+                                  ? Container(
+                                      height: 200,
+                                      alignment: Alignment.center,
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.list_alt, size: 40, color: Colors.grey[300]),
+                                          const SizedBox(height: 10),
+                                          const Text("No features listed", style: TextStyle(color: Colors.grey)),
+                                        ],
+                                      ),
+                                    )
+                                  : Wrap(
+                                      spacing: 12, // Horizontal gap
+                                      runSpacing: 12, // Vertical gap
+                                      children: amenities.map((feature) {
+                                        final icon = FeaturesData.getFeatureIcon(feature);
+                                        // Calculate width for 3 columns (Screen width - padding - spacing) / 3
+                                        final itemWidth = (MediaQuery.of(context).size.width - 40 - 24) / 3;
+
+                                        return Container(
+                                          width: itemWidth,
+                                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(16),
+                                            border: Border.all(color: Colors.grey.shade100),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.03),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 4),
+                                              )
+                                            ]
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryColor.withOpacity(0.05),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Icon(icon, color: AppTheme.primaryColor, size: 24),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Text(
+                                                feature.trim(),
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  fontSize: 11, 
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.black87
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                              ),
+                                      
+                                
+
+                              // --- Rules & Terms Tab ---
+                              SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Deposit Section
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.secondaryColor.withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2))
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            "Security Deposit",
+                                            style: TextStyle(
+                                              fontSize: 14, 
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.primaryColor
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            (residence.deposit != null && residence.deposit! > 0)
+                                                ? "RM ${residence.deposit!.toStringAsFixed(0)}"
+                                                : "No Deposit Required",
+                                            style: const TextStyle(
+                                              fontSize: 18, 
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    
+                                    const SizedBox(height: 24),
+                                    
+                                    const Text(
+                                      "House Rules",
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      (residence.rules != null && residence.rules!.isNotEmpty)
+                                          ? residence.rules!
+                                          : "No specific rules provided by the owner. Standard tenancy agreements apply.\n\n• Treat the property with respect.\n• Report issues promptly.\n• Follow local community guidelines.",
+                                      style: TextStyle(height: 1.6, color: Colors.grey[800]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 100), // Space for bottom bar
+                      ],
                     ),
                   ),
                 ],
               ),
+
+              // --- Bottom Bar ---
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        blurRadius: 6,
-                        color: Colors.black.withAlpha((0.1 * 255).toInt()),
-                        offset: const Offset(0, -2),
+                        blurRadius: 10,
+                        color: Colors.black.withValues(alpha: (0.1)),
+                        offset: const Offset(0, -4),
                       ),
                     ],
                   ),
-                  child: SafeArea(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '\$${residence.price?.toStringAsFixed(2) ?? '-'} / month',
-                          style: AppTheme.heading1.copyWith(
-                            fontSize: 20,
-                            color: AppTheme.primaryColor,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text("Price", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text(
+                            residence.price != null && residence.price! > 0
+                                ? 'RM ${residence.price!.toStringAsFixed(0)} / mo'
+                                : 'Price TBD',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (!_resolvedViewOnly)
+                        ElevatedButton(
+                          onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return RentRequestDialog(
+                                    onSubmit: (startDate, duration, files) {
+                                      RentService.sendRentRequest(
+                                          propertyId: widget.propertyId,
+                                          userId: AppUser().id!,
+                                          startDate: startDate,
+                                          duration: duration,
+                                          files: files
+                                      );
+                                      Navigator.pop(context); 
+                                    },
+                                  );
+                                },
+                              );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Rent Now',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ),
-                        if (!_resolvedViewOnly)
-                          ElevatedButton(
-                            onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return RentRequestDialog(
-                                      onSubmit: (startDate, duration, files) {
-                                        RentService.sendRentRequest(
-                                            propertyId: widget.propertyId,
-                                            userId: AppUser().id!,
-                                            startDate: startDate,
-                                            duration: duration,
-                                            files: files
-                                        );
-
-                                        Navigator.pop(context); // Close the dialog
-                                      },
-                                    );
-                                  },
-                                );
-
-                            },
-                            style: AppTheme.primaryButton,
-                            child: const Text('Rent Now'),
-                          ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -365,8 +573,6 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
       ),
     );
   }
-
-
 }
 
 class RentRequestDialog extends StatefulWidget {
@@ -383,7 +589,7 @@ class _RentRequestDialogState extends State<RentRequestDialog> {
   int _duration = 1;
   List<XFile> _files = [];
 
-  final int _maxAdvanceDays = 15;
+  final int _maxAdvanceDays = 30; // Increased window slightly
 
   @override
   Widget build(BuildContext context) {
@@ -396,15 +602,12 @@ class _RentRequestDialogState extends State<RentRequestDialog> {
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Start Date picker
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text("Start Date"),
-              subtitle: Text(_startDate != null
-                  ? DateFormat('yyyy-MM-dd').format(_startDate!)
-                  : "Select a date"),
-              trailing: const Icon(Icons.calendar_today),
+            // Start Date
+            const Text("Start Date", style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            InkWell(
               onTap: () async {
                 final picked = await showDatePicker(
                   context: context,
@@ -413,61 +616,56 @@ class _RentRequestDialogState extends State<RentRequestDialog> {
                   lastDate: lastDate,
                 );
                 if (picked != null) {
-                  setState(() {
-                    _startDate = picked;
-                  });
+                  setState(() => _startDate = picked);
                 }
               },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(_startDate != null
+                        ? DateFormat('yyyy-MM-dd').format(_startDate!)
+                        : "Select Date"),
+                    const Icon(Icons.calendar_today, size: 20),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 16),
 
-            // Duration (months)
+            // Duration
+            const Text("Duration (Months)", style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Label on the left
-                Flexible(
-                  child: Text(
-                    "Duration (months):",
-                    softWrap: true,
-                  ),
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.remove),
+                  onPressed: () {
+                    if (_duration > 1) setState(() => _duration--);
+                  },
                 ),
-
-                // Duration + buttons on the right
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: () {
-                        if (_duration > 1) {
-                          setState(() {
-                            _duration--;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      "$_duration",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 16),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () {
-                        setState(() {
-                          _duration++;
-                        });
-                      },
-                    ),
-                  ],
+                const SizedBox(width: 16),
+                Text(
+                  "$_duration",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(width: 16),
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.add),
+                  onPressed: () => setState(() => _duration++),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            
-            // File upload widget
+            // File Upload
+            const Text("Financial Documents", style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             XFileUploadWidget(
               onFilesChanged: (files) {
                 setState(() {
@@ -490,11 +688,9 @@ class _RentRequestDialogState extends State<RentRequestDialog> {
                   widget.onSubmit(_startDate!, _duration, _files);
                 },
           style: AppTheme.primaryButton,
-          child: const Text("Submit Rent Request"),
-          
+          child: const Text("Submit Request"),
         ),
       ],
     );
   }
 }
-

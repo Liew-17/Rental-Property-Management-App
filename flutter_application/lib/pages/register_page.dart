@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/models/user.dart';
+import 'package:flutter_application/pages/main_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application/services/api_service.dart';
 import 'dart:convert';
@@ -46,6 +47,7 @@ class _RegisterPageState extends State<RegisterPage> {
           'uid': uid,
           'username': username,
           'role': 'user', 
+          'email': user.email
         }),
       );
 
@@ -55,7 +57,13 @@ class _RegisterPageState extends State<RegisterPage> {
         if (!mounted) return;
         AppUser appUser = AppUser();
         appUser.id =  data['id'];
-        Navigator.pushReplacementNamed(context, '/profile');
+        appUser.name = data['name'];
+        appUser.email = data['email'];
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainPage()),
+          (route) => false,
+        );
       }
 
     } catch (e) {

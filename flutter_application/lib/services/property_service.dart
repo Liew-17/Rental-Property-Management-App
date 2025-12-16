@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_application/models/lease.dart';
+import 'package:flutter_application/models/tenant_record.dart';
 import 'package:flutter_application/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -109,7 +111,6 @@ class PropertyService {
       return false;
     }
   }
-
 
  static Future<bool> deleteGalleryImage({required int propertyId, required String imageUrl}) async {
     try {
@@ -239,15 +240,14 @@ class PropertyService {
     }
   }
 
-
- static Future<Residence> getDetails(int propertyId) async {
+  static Future<Residence> getDetails(int propertyId) async {
     final uri = ApiService.buildUri("/property/residence/details");
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final id = AppUser().id;
     
     // Prepare request body
     final body = jsonEncode({
       "property_id": propertyId,
-      "uid": uid
+      "id": id,
     });
 
     final response = await http.post(
@@ -267,7 +267,7 @@ class PropertyService {
 
   }
 
- static Future<ResidenceQueryResult> query({String? state, String? city, String? district, int page = 1,}) async {
+  static Future<ResidenceQueryResult> query({String? state, String? city, String? district, int page = 1,}) async {
     final id = AppUser().id;
 
     // Build query string 
@@ -305,8 +305,8 @@ class PropertyService {
 
   }
 
-static Future<List<Residence>> getOwnedProperties(int ownerId) async {
-    // Construct endpoint with owner_id directly
+  static Future<List<Residence>> getOwnedProperties(int ownerId) async {
+   
     final endpoint = "/property/residences/owned?owner_id=$ownerId";
     final uri = ApiService.buildUri(endpoint);
 
@@ -325,6 +325,104 @@ static Future<List<Residence>> getOwnedProperties(int ownerId) async {
     final List<dynamic> propsJson = data["properties"];
     return propsJson.map((item) => Residence.fromJson(item)).toList();
   }
+
+  static Future<List<Residence>> getRentedProperties(int tenantId) async {
+    
+    final endpoint = "/property/residences/rented/$tenantId";
+    final uri = ApiService.buildUri(endpoint);
+
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+          "Failed to fetch rented properties: ${response.statusCode}");
+    }
+
+    final data = jsonDecode(response.body);
+    if (data["success"] != true) {
+      throw Exception("Failed to fetch rented properties: ${data["message"]}");
+    }
+
+    final List<dynamic> propsJson = data["properties"];
+    return propsJson.map((item) => Residence.fromJson(item)).toList();
+  }
+
+ static Future<List<Lease>> getAllLeases(int propertyId) async {
+    final uri = ApiService.buildUri("/property/get_lease/$propertyId/0"); // 0 = fetch all (not included terminated leases)
+
+    try {
+      final response = await http.get(uri);
+      final jsonData = jsonDecode(response.body);
+
+      if (jsonData['success'] == true) {
+        List<dynamic> list = jsonData['data']; 
+        return list.map((item) => Lease.fromJson(item)).toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      debugPrint("Exception during get lease: $e");
+      return [];
+    }
+  }
+
+  
+  static Future<List<TenantRecord>> getTenantRecords({required int leaseId}) async {
+    final uri = ApiService.buildUri("/property/get_tenant_records/$leaseId");
+
+    try {
+      final response = await http.get(uri);
+      final jsonData = jsonDecode(response.body);
+
+      if (jsonData['success'] == true) {
+        List<dynamic> list = jsonData['data'];
+        return list.map((item) => TenantRecord.fromJson(item)).toList();
+      } else {
+        debugPrint("Get tenant records failed: ${jsonData['message']}");
+        return [];
+      }
+    } catch (e) {
+      debugPrint("Exception during get tenant records: $e");
+      return [];
+    }
+  }
+
+  static Future<Lease?> getActiveLeaseForTenant(int propertyId) async {
+    final uri = ApiService.buildUri("/property/get_lease/$propertyId/1"); 
+
+    try {
+      final response = await http.get(uri);
+      final jsonData = jsonDecode(response.body);
+
+      if (jsonData['success'] == true) {
+        List<dynamic> list = jsonData['data'];
+        
+        if (list.isNotEmpty) {
+          final lease = Lease.fromJson(list.first);
+          
+          // verification
+          final currentUserId = AppUser().id;
+          if (currentUserId != null && lease.tenantId == currentUserId) {
+            final records = await getTenantRecords(leaseId: lease.id); // fetch tenant records
+            
+            records.sort((a, b) => b.startDate.compareTo(a.startDate));
+            
+            lease.tenantRecords = records;
+            
+            return lease;
+          } else {
+            debugPrint("Active lease found, but current user ($currentUserId) is not the tenant (${lease.tenantId}).");
+            return null;
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint("Exception fetching active lease for tenant: $e");
+      return null;
+    }
+  }
+
 
 }
 

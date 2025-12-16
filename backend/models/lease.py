@@ -5,41 +5,47 @@ class Lease(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Link to property
     property_id = db.Column(db.Integer, db.ForeignKey("properties.id"), nullable=False)
     property = db.relationship("Property", backref=db.backref("leases", lazy=True))
 
-    # Tenant (user)
+    request_id = db.Column(db.Integer, db.ForeignKey("requests.id"), unique=True, nullable=True)
+    request = db.relationship("Request", backref=db.backref("lease", uselist=False))
+
     tenant_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     tenant = db.relationship("User", backref=db.backref("leases", lazy=True))
 
-    # Lease details
+    channel_id = db.Column(db.Integer, db.ForeignKey("channels.id"), nullable=True)
+    channel = db.relationship("Channel", backref=db.backref("lease", uselist=False))
+
     start_date = db.Column(db.Date, nullable=False)
+    gracePeriodDays = db.Column(db.Integer, nullable=False, default=3)
     end_date = db.Column(db.Date, nullable=True)
     termination_date = db.Column(db.Date, nullable=True)
 
     monthly_rent = db.Column(db.Float, nullable=False)
     deposit_amount = db.Column(db.Float, nullable=True)
 
-    contract_url = db.Column(db.String(255), nullable=True)  # url of contract
-    channel_id = db.Column(db.String(255), nullable=True)    # chat channel id
+    contract_document_id = db.Column(db.Integer, db.ForeignKey("request_documents.id"), nullable=True)
+    contract_doc = db.relationship("RequestDocument", foreign_keys=[contract_document_id])
 
-    status = db.Column(db.String(50), default="active")
-    # active, pending, terminated, completed
+    status = db.Column(db.String(50), default="pending")
 
     @classmethod
-    def create(cls, property_id, tenant_id, start_date, monthly_rent,
-               end_date=None, deposit_amount=None, contract_url=None,
-               channel_id=None, status="active"):
-
+    def create(cls, *, property_id, tenant_id, start_date, end_date,
+           request_id, monthly_rent, deposit_amount=None,
+           contract_document_id=None, channel_id=None,
+           gracePeriodDays=3, status="pending"):
+    
         new_lease = cls(
             property_id=property_id,
             tenant_id=tenant_id,
+            request_id=request_id,
             start_date=start_date,
             end_date=end_date,
             monthly_rent=monthly_rent,
             deposit_amount=deposit_amount,
-            contract_url=contract_url,
+            gracePeriodDays=gracePeriodDays,
+            contract_document_id=contract_document_id,
             channel_id=channel_id,
             status=status
         )

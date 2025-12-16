@@ -25,7 +25,6 @@ class Property(db.Model):
 
     price = db.Column(db.Float, nullable=True)
     deposit = db.Column(db.Float, nullable=True)
-    required_deposit = db.Column(db.Boolean, default=False, nullable=False)
 
 
     user = db.relationship(

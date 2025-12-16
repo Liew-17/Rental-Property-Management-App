@@ -1,10 +1,83 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_application/models/channel.dart';
+import 'package:flutter_application/models/channel_preview.dart';
 import 'package:flutter_application/models/message.dart';
+import 'package:flutter_application/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'api_service.dart'; 
 
 class ChatService {
+
+  static Future<Channel?> initiateChannel({
+    required int propertyId,
+    required int tenantId,
+    String type = "query"
+  }) async {
+    try {
+      final uri = ApiService.buildUri("/chat/initiate");
+      final response = await http.post(
+        uri,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "property_id": propertyId,
+          "tenant_id": tenantId,
+          "type": type,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        return Channel.fromJson(data['channel']);
+      } else {
+        debugPrint("Failed to initiate channel: ${data['message']}");
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Exception initiating channel: $e");
+      return null;
+    }
+  }
+
+  static Future<Channel?> getChannelByLease(int leaseId) async {
+      try {
+        final uri = ApiService.buildUri("/chat/lease/$leaseId");
+        final response = await http.get(uri);
+        
+        final data = jsonDecode(response.body);
+        
+        if (response.statusCode == 200 && data['success'] == true) {
+          return Channel.fromJson(data['channel']);
+        } else {
+          debugPrint("Failed to fetch channel by lease: ${data['message']}");
+          return null;
+        }
+      } catch (e) {
+        debugPrint("Exception fetching channel by lease: $e");
+        return null;
+      }
+    }
+
+  static Future<List<ChannelPreview>> getUserChannels() async {
+    try {
+      int userId = AppUser().id!;
+      final uri = ApiService.buildUri("/chat/list/$userId");
+      final response = await http.get(uri);
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        return (data['channels'] as List)
+            .map((item) => ChannelPreview.fromJson(item))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint("Error fetching channels: $e");
+      return [];
+    }
+  }
 
   static Future<Message> sendImageMessage({
     required int senderId,
@@ -66,7 +139,7 @@ class ChatService {
     List<dynamic> rawMessages = data["messages"];
     return rawMessages.map((m) => Message.fromJson(m)).toList();
   }
-
+  
   static Future<Message> sendTextMessage({
     required int senderId,
     required int channelId,

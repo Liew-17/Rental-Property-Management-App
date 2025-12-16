@@ -64,12 +64,12 @@ def residence_details_post():
         return jsonify({"success": False, "message": "No JSON data provided"}), 400
 
     property_id = data.get("property_id")
-    uid = data.get("uid")  
+    id = data.get("id")  
 
     if property_id is None:
         return jsonify({"success": False, "message": "property_id is required"}), 400
 
-    success, result = property_service.get_residence_details(property_id, uid)
+    success, result = property_service.get_residence_details(property_id, id)
 
     if not success:
         return jsonify({"success": False, "message": result}), 404
@@ -103,6 +103,16 @@ def get_owned_properties_route():
         }), 400
 
     data = property_service.get_owned_properties(owner_id)
+
+    return jsonify({
+        "success": True,
+        "properties": data
+    }), 200
+
+@property_bp.route("/residences/rented/<int:tenant_id>", methods=["GET"])
+def get_rented_properties_route(tenant_id):
+
+    data = property_service.get_rented_properties(tenant_id)
 
     return jsonify({
         "success": True,
@@ -215,4 +225,43 @@ def list_properties_route():
     return jsonify({
         "success": True,
         "message": data
+    }), 200
+
+@property_bp.route("/get_lease/<int:property_id>/<int:active_only>", methods=["GET"])
+def get_lease_route(property_id, active_only):
+    """
+    Call get_lease() with active_only flag.
+    active_only: 1 = only active lease, 0 = all leases
+    """
+    active_only_flag = bool(active_only)
+
+    success, result = property_service.get_lease(property_id, active_only_flag)
+
+    if not success:
+        return jsonify({
+            "success": False,
+            "message": result
+        }), 400
+
+    return jsonify({
+        "success": True,
+        "data": result
+    }), 200
+
+@property_bp.route("/get_tenant_records/<int:lease_id>", methods=["GET"])
+def get_tenant_records_route(lease_id):
+    """
+    Call get_tenant_records() for a given lease.
+    """
+    success, result = property_service.get_tenant_records(lease_id)
+
+    if not success:
+        return jsonify({
+            "success": False,
+            "message": result
+        }), 400
+
+    return jsonify({
+        "success": True,
+        "data": result
     }), 200

@@ -18,168 +18,135 @@ class ListingManagementPage extends StatefulWidget {
 }
 
 class _ListingManagementPageState extends State<ListingManagementPage> {
-    Residence? _residence ;
-    double? _suggestedPrice;
-    var _allNecessaryCompleted = false;
+  Residence? _residence;
+  double? _suggestedPrice;
+  var _allNecessaryCompleted = false;
+  bool _isLoading = true;
 
-    @override
-    void initState() {
-      super.initState();
-      _loadProperty();
-    }
+  @override
+  void initState() {
+    super.initState();
+    _loadProperty();
+  }
 
-    Future<void> _loadProperty() async {
-      try {
-        final Residence data = await PropertyService.getDetails(widget.propertyId);
-        final double? price = await PropertyService.predictProperty(propertyId: widget.propertyId);
-        if (!mounted) return;
-
-        setState(() {
-          _residence = data;
-          _suggestedPrice = price;
-        });
-
-      } catch (e) {
-        debugPrint("Failed to load property: $e");
-        if (mounted) Navigator.pop(context);
-      }
-    }
-
-    List<RequirementStatus> buildRequirements(Residence residence) {
-      bool photosOk = residence.thumbnailUrl != null &&
-                      residence.thumbnailUrl!.isNotEmpty;
-
-      List<String> missingLocation = [];
-
-      if (residence.state?.isEmpty ?? true) missingLocation.add("State");
-      if (residence.district?.isEmpty ?? true) missingLocation.add("District");
-      if (residence.city?.isEmpty ?? true) missingLocation.add("City");
-      if (residence.address?.isEmpty ?? true) missingLocation.add("Street Address");
-
-      bool locationOk = missingLocation.isEmpty;
-
-
-
-      List<String> missing = [];
-
-      if (residence.numBedrooms == null) missing.add("bedrooms");
-      if (residence.numBathrooms == null) missing.add("bathrooms");
-      if (residence.landSize == null||residence.landSize == 0.0) missing.add("land size");
-      if (residence.residenceType == null || residence.residenceType!.isEmpty) missing.add("type");
-    
-      bool detailsOk = missing.isEmpty;
-
-      bool titleOk = residence.title?.isNotEmpty ?? false;
-      bool descriptionOk = residence.description?.isNotEmpty ?? false;
-
-      return [
-        RequirementStatus(
-          label: titleOk ? "Title" : "Title (Missing)",
-          completed: titleOk,
-        ),
-        RequirementStatus(
-          label: descriptionOk ? "Description" : "Description (Missing)",
-          completed: descriptionOk,
-        ),
-        RequirementStatus(
-          label: photosOk ? "Property Photos" : "Property Photos (Missing thumbnail)",
-          completed: photosOk,
-        ),
-        RequirementStatus(
-          label: locationOk 
-              ? "Location Details" 
-              : "Location Details (Missing: ${missingLocation.join(', ')})",
-          completed: locationOk,
-        ),
-        RequirementStatus(
-          label: detailsOk
-              ? "Residence Details"
-              : "Residence Details (Missing: ${missing.join(', ')})",
-          completed: detailsOk,
-        ),
-      ];
-    }
-
-    @override
-    Widget build(BuildContext context) {
+  Future<void> _loadProperty() async {
+    try {
+      final Residence data = await PropertyService.getDetails(widget.propertyId);
+      final double? price = await PropertyService.predictProperty(propertyId: widget.propertyId);
       
-      if(_residence == null){
-        return Scaffold(
-            appBar: AppBar(title: const Text("Listing Management")),
-            body: const Center(child: CircularProgressIndicator()),
-          );
-      }
+      if (!mounted) return;
 
+      setState(() {
+        _residence = data;
+        _suggestedPrice = price;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("Failed to load property: $e");
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Listing Management', style: TextStyle(color: Colors.white)),
-          centerTitle: true,
-          backgroundColor: AppTheme.primaryColor,
-          scrolledUnderElevation: 0,            
-        ),
-        body: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(title: const Text("Listing Management")),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_residence == null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(title: const Text("Error")),
+        body: const Center(child: Text("Failed to load property")),
+      );
+    }
+
+    final statusColor = AppTheme.getStatusColor(_residence!.status);
+    final statusLower = (_residence!.status ?? "").toLowerCase();
+    
+    final isListed = _residence!.status == "listed";
+    // Check if property is in a rented state (rented or renting)
+    final isRented = ["rented", "renting"].contains(statusLower);
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text('Listing Management'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: CustomScrollView(
+        slivers: [
+          // 1. Header & Preview Section
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 6),
+                // Info Header
+                Container(
+                  padding: const EdgeInsets.all(20),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-
-                      // -------- Header + Badge --------
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Property Name - Large & Bold
-                          Text(
-                            _residence!.name,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22, // larger heading
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Status Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _residence!.status == "listed"
-                                  ? Colors.green.shade100
-                                  : Colors.orange.shade100,
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: Text(
-                              _residence!.status == "listed" ? "Listed" : "Not Listed",
-                              style: TextStyle(
-                                color: _residence!.status == "listed"
-                                    ? Colors.green.shade700
-                                    : Colors.orange.shade700,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      // -------- Preview Section --------
-                      const Text(
-                        'Preview',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const Text(
-                        'Click on the card below to view details.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color.fromARGB(255, 148, 148, 148),
+                      Text(
+                        _residence!.name,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(color: statusColor.withOpacity(0.5)),
+                        ),
+                        child: Text(
+                          (_residence!.status ?? "Unknown").toUpperCase(),
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
+                const SizedBox(height: 24),
+
+                // Preview Card
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Preview",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "This is how your property appears in search results.",
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 12),
                       ResidenceCard(
                         residence: _residence!,
                         onTap: (id) {
@@ -192,366 +159,385 @@ class _ListingManagementPageState extends State<ListingManagementPage> {
                           );
                         },
                       ),
-
-                      const SizedBox(height: 25),
-
-                      if(_residence!.status == "listed") 
-                        _buildListedView(context)
-                      else 
-                        _buildUnlistedView(context),
-
-
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 24),
+
+                // Actions Title - Hidden if Rented
+                if (!isRented) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      isListed ? "Manage Listing" : "Actions",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            ),
+          ),
+
+          // Action Buttons Grid - Hidden if Rented
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, 
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.4, // Wide buttons
               ),
-      
-      
-        );
-      
-    }
-
-    Widget _buildListedView(BuildContext context) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-
-          //Action buttons
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ActionButton(
-                  icon: Icons.people,
-                  label: 'Request',
-                  onTap: () {
-                    //TODO: go to request page
-                  },
-                ),
-                ActionButton(
-                  icon: Icons.cancel,
-                  label: 'Unlist',
-                  onTap: () {
-                    //TODO: connect to unlist endpoint
-                  },
-                ),
-
-                
-              ],
+              delegate: SliverChildListDelegate(
+                isRented 
+                  ? [] // Empty list for rented state
+                  : (isListed ? _getListedActions(context) : _getUnlistedActions(context)),
+              ),
             ),
           ),
 
-          _buildListingStatsSection(),
-
-        ],
-      );
-    }
-
-    Widget _buildUnlistedView(BuildContext context) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-
-          // -------- Action Buttons --------
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ActionButton(
-                  icon: Icons.edit,
-                  label: 'Edit',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EditPropertyPage(propertyId: _residence!.id),
-                      ),
-                    ).then((_) {
-                      if (mounted) _loadProperty();
-                    });
-                  },
-                ),
-                const SizedBox(width: 100),
-                ActionButton(
-                  icon: Icons.upload,
-                  label: 'List',
-                  onTap: () {
-                    if (!_allNecessaryCompleted) {
-                      showDialog(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: const Text('Missing Information'),
-                          content: const Text('Please complete all required fields before listing.'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
-                          ],
-                        ),
-                      );
-                      return;
-                    }
-
-                    showDialog(
-                      context: context,
-                      barrierDismissible: true,
-                      builder: (_) => Dialog(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: _buildPricingSheet(
-                          parentContext: context,
-                          onConfirm: (price, deposit) async {
-                            if (price == null || price == 0) {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text("Error"),
-                                  content: const Text("Price is required."),
-                                  actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK"))],
-                                ),
-                              );
-                              return;
-                            }
-
-                            final success = await PropertyService.listProperty(
-                              propertyId: widget.propertyId,
-                              price: price,
-                              deposit: deposit,
-                            );
-
-                            if (!context.mounted) return;
-
-                            if (success) {
-                              Navigator.pop(context);
-                              _loadProperty();
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text("Error"),
-                                  content: const Text("Failed to list property."),
-                                  actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK"))],
-                                ),
-                              );
-                            }
+          // 3. Bottom Section (Stats or Checklist) - Hidden if Rented
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: isRented
+                  ? const SizedBox.shrink() // Hide section for rented state
+                  : (isListed
+                      ? _buildListingStatsSection()
+                      : MissingRequirementsSection(
+                          residence: _residence!,
+                          onChanged: (allCompleted) {
+                        
+                            Future.microtask(() {
+                              if (mounted && _allNecessaryCompleted != allCompleted) {
+                                setState(() => _allNecessaryCompleted = allCompleted);
+                              }
+                            });
                           },
-                          suggestedPrice: _suggestedPrice,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                        )),
             ),
           ),
-
-          const SizedBox(height: 25),
-
-          // -------- Missing Requirements Section --------
-          MissingRequirementsSection(
-            residence: _residence!,
-            onChanged: (allCompleted) {
-              _allNecessaryCompleted = allCompleted;
-            },
-          ),
-
-          const SizedBox(height: 25),
+          
+          const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
-      );
-    }
+      ),
+    );
+  }
 
+  // --- Actions ---
 
-    Widget _buildListingStatsSection() {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Listing Performance",
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: const Color.fromARGB(255, 0, 0, 0),
+  List<Widget> _getUnlistedActions(BuildContext context) {
+    return [
+      ActionButton(
+        icon: Icons.edit_rounded,
+        label: 'Edit Info',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EditPropertyPage(propertyId: _residence!.id),
             ),
-          ),
+          ).then((_) {
+            if (mounted) _loadProperty();
+          });
+        },
+      ),
+      ActionButton(
+        icon: Icons.publish_rounded,
+        label: 'List Property',
+        onTap: () => _handleListProperty(context),
+      ),
+    ];
+  }
 
-          const SizedBox(height: 10),
+  List<Widget> _getListedActions(BuildContext context) {
+    return [
+      ActionButton(
+        icon: Icons.people_alt_rounded,
+        label: 'Requests',
+        onTap: () {
+          // TODO: Navigate to request page
+        },
+      ),
+      ActionButton(
+        icon: Icons.unpublished_rounded,
+        label: 'Unlist',
+        onTap: () {
+          // TODO: connect to unlist endpoint
+        },
+      ),
+    ];
+  }
 
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 6,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                //TODO: implement analytics
-                _buildStatRow('Status', 'Active'),
-                _buildStatRow('Views', '124'),
-                _buildStatRow('Requests', '8'),
-                _buildStatRow('Favorites', '34'),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    Widget _buildStatRow(String label, String value) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: const TextStyle(color: Colors.black54)),
-            Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
+  void _handleListProperty(BuildContext context) {
+    if (!_allNecessaryCompleted) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Missing Information'),
+          content: const Text('Please complete all required fields before listing.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK')),
           ],
         ),
       );
+      return;
     }
 
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: _buildPricingSheet(
+          parentContext: context,
+          onConfirm: (price, deposit) async {
+            if (price == null || price == 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Price is required.")));
+              return;
+            }
 
-}
+            final success = await PropertyService.listProperty(
+              propertyId: widget.propertyId,
+              price: price,
+              deposit: deposit,
+            );
+
+            if (!context.mounted) return;
+
+            if (success) {
+              Navigator.pop(context);
+              _loadProperty();
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Failed to list property.")));
+            }
+          },
+          suggestedPrice: _suggestedPrice,
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildListingStatsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Performance",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildStatRow('Status', 'Active', Colors.green),
+              _buildStatRow('Views', '124', Colors.black87),
+              _buildStatRow('Requests', '8', Colors.black87),
+              _buildStatRow('Favorites', '34', Colors.pink),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatRow(String label, String value, Color valueColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 15)),
+          Text(
+            value,
+            style: TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 15, color: valueColor),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildPricingSheet({
     required void Function(double? price, double? deposit) onConfirm,
     required BuildContext parentContext,
-    double? suggestedPrice, // AI price, just display
+    double? suggestedPrice,
   }) {
-  final TextEditingController priceController = TextEditingController();
-  final TextEditingController depositController = TextEditingController();
+    final TextEditingController priceController = TextEditingController();
+    final TextEditingController depositController = TextEditingController();
 
-  return Padding(
-    padding: const EdgeInsets.all(20),
-    child: SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Set Pricing',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-
-          Row(
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.lightbulb, color: AppTheme.primaryColor),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Row(
+            const Text(
+              'Set Pricing',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+
+            // AI Suggestion Box
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+              ),
+              child: Column(
                 children: [
-                  Text(
-                    suggestedPrice != null
-                        ? 'AI Suggested Price: RM ${suggestedPrice.toStringAsFixed(2)}'
-                        : 'AI suggested price not available',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  if (suggestedPrice != null) ...[
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () {
-                        // Show a dialog with more info
+                  Row(
+                    children: [
+                      const Icon(Icons.auto_awesome, color: AppTheme.primaryColor, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          suggestedPrice != null
+                              ? 'AI Suggested: RM ${suggestedPrice.toStringAsFixed(0)}'
+                              : 'AI suggestion unavailable',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      ),
+                      
+                      if (suggestedPrice != null)
+                        GestureDetector(
+                          onTap: () {
                             showDialog(
                               context: parentContext,
-                              builder: (_) => AlertDialog(
-                                title: const Text('AI Price Info'),
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Disclaimer'),
                                 content: const Text(
-                                  'This price is suggested by our AI based on similar properties. '
-                                  'You can use it or set your own price.',
+                                  'This price is provided by AI based on market data. '
+                                  'Use at your own risk.',
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.pop(parentContext),
+                                    onPressed: () => Navigator.pop(ctx),
                                     child: const Text('OK'),
                                   ),
                                 ],
                               ),
                             );
                           },
-                          child: const Icon(
-                            Icons.help_outline,
-                            size: 18,
-                            color: AppTheme.primaryColor,
+                          child: const Padding(
+                            padding: EdgeInsets.only(left: 8.0),
+                            child: Icon(
+                              Icons.help_outline, 
+                              size: 20, 
+                              color: AppTheme.primaryColor
+                            ),
                           ),
                         ),
-                      ],
                     ],
                   ),
-                ),
-                if (suggestedPrice != null)
-                  TextButton(
-                    onPressed: () {
-                      priceController.text = suggestedPrice.toStringAsFixed(2);
-                    },
-                    child: const Text('Use'),
+                
+                  if (suggestedPrice != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            priceController.text = suggestedPrice.toStringAsFixed(0);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppTheme.primaryColor),
+                            padding: const EdgeInsets.symmetric(vertical: 0),
+                            minimumSize: const Size(0, 36),
+                          ),
+                          child: const Text('Apply Suggestion', style: TextStyle(fontSize: 13)),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Price Fields
+            TextField(
+              controller: priceController,
+              decoration: InputDecoration(
+                labelText: 'Monthly Rent (RM)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(Icons.attach_money),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: depositController,
+              decoration: InputDecoration(
+                labelText: 'Deposit Amount (RM)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(Icons.savings_outlined),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 24),
+
+            // Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(parentContext),
+                    child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                   ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final double? price = double.tryParse(priceController.text);
+                      final double? deposit = double.tryParse(depositController.text);
+                      onConfirm(price, deposit);
+                    },
+                    style: AppTheme.primaryButton,
+                    child: const Text('Publish'),
+                  ),
+                ),
               ],
             ),
-
-            const SizedBox(height: 16),
-
-          // Price field
-          TextField(
-            controller: priceController,
-            decoration: const InputDecoration(
-              labelText: 'Price (RM)',
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 16),
-
-          // Deposit field
-          TextField(
-            controller: depositController,
-            decoration: const InputDecoration(
-              labelText: 'Deposit (RM)',
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 20),
-
-          // Confirm List button
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(parentContext); // closes the sheet
-                  },
-                  child: const Text('Cancel'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    final double? price = double.tryParse(priceController.text);
-                    final double? deposit = double.tryParse(depositController.text);
-                    onConfirm(price, deposit); // your callback
-                  },
-                  style: AppTheme.primaryButton,
-                  child: const Text('Confirm List'),
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

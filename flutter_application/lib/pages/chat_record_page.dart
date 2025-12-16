@@ -1,29 +1,25 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/clickable_image.dart';
-import 'package:flutter_application/models/channel.dart'; // Ensure this model exists
+import 'package:flutter_application/models/channel.dart';
 import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/services/api_service.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application/models/message.dart';
 import 'package:flutter_application/theme.dart';
 import 'package:flutter_application/services/chat_service.dart';
 
-class ChatPage extends StatefulWidget {
-  final int propertyId;
-  final int tenantId;
+class ChatRecordPage extends StatefulWidget {
+  final int leaseId;
 
-  const ChatPage({
+  const ChatRecordPage({
     super.key,
-    required this.propertyId,
-    required this.tenantId,
+    required this.leaseId,
   });
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  State<ChatRecordPage> createState() => _ChatRecordPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatRecordPageState extends State<ChatRecordPage> {
   // Chat State
   Channel? _channel;
   List<Message> messages = [];
@@ -31,7 +27,6 @@ class _ChatPageState extends State<ChatPage> {
   
   // UI Controllers
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _textController = TextEditingController();
   bool _showScrollToBottom = false;
   bool _isLoadingMore = false;
 
@@ -47,16 +42,12 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _textController.dispose();
     super.dispose();
   }
 
   Future<void> _initializeChat() async {
     try {
-      final channel = await ChatService.initiateChannel(
-        propertyId: widget.propertyId,
-        tenantId: widget.tenantId,
-      );
+      final channel = await ChatService.getChannelByLease(widget.leaseId);
 
       if (channel != null) {
         setState(() {
@@ -69,7 +60,7 @@ class _ChatPageState extends State<ChatPage> {
         if (mounted) {
           setState(() => _isLoadingChannel = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Failed to initialize chat connection.")),
+            const SnackBar(content: Text("No chat history found for this lease.")),
           );
         }
       }
@@ -79,7 +70,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // --- 2. Message Loading ---
   Future<void> _loadInitialMessages() async {
     if (_channel == null) return;
     try {
@@ -163,71 +153,23 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // --- 3. Sending Messages ---
-  Future<void> _sendTextMessage() async {
-    if (_channel == null) return;
-    final text = _textController.text.trim();
-    if (text.isEmpty) return;
-
-    _textController.clear();
-
-    try {
-      Message msg = await ChatService.sendTextMessage(
-        senderId: _currentUserId,
-        channelId: _channel!.id,
-        messageBody: text,
-      );
-      setState(() => messages.add(msg));
-      _scrollToBottom();
-    } catch (e) {
-      debugPrint("Failed to send text message: $e");
-    }
-  }
-
-  Future<void> _sendImageMessage() async {
-    if (_channel == null) return;
-    final picker = ImagePicker();
-
-    try {
-      final pickedFile = await picker.pickImage(
-        source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
-      );
-
-      if (pickedFile == null) return;
-
-      final msg = await ChatService.sendImageMessage(
-        senderId: _currentUserId,
-        channelId: _channel!.id,
-        imageFile: pickedFile,
-      );
-
-      setState(() => messages.add(msg));
-      _scrollToBottom();
-    } catch (e) {
-      debugPrint("Failed to send image: $e");
-    }
-  }
-
-  // --- 4. Custom Header Builders ---
   PreferredSizeWidget _buildAppBar() {
     if (_isLoadingChannel || _channel == null) {
       return AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
+        title: const Text("Chat History", style: TextStyle(color: Colors.black)),
       );
     }
 
-    // Determine Logic: Am I the Owner or Tenant?
     final bool isMeOwner = _currentUserId == _channel!.ownerId;
     
-    // Display the "Opposite" person
     final String displayName = isMeOwner ? _channel!.tenantName : _channel!.ownerName;
     final String? displayProfile = isMeOwner ? _channel!.tenantProfile : _channel!.ownerProfile;
     final String roleLabel = isMeOwner ? "Tenant" : "Landlord";
     final Color roleColor = isMeOwner ? Colors.blue : Colors.orange;
     
-    // Property Title
     final String propTitle = _channel!.displayTitle; 
 
     return AppBar(
@@ -237,7 +179,6 @@ class _ChatPageState extends State<ChatPage> {
       titleSpacing: 0,
       title: Row(
         children: [
-          // Profile Pic
           CircleAvatar(
             radius: 20,
             backgroundColor: Colors.grey[200],
@@ -249,8 +190,6 @@ class _ChatPageState extends State<ChatPage> {
                 : null,
           ),
           const SizedBox(width: 12),
-          
-          // Info Column
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,7 +208,6 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Role Badge
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
@@ -298,7 +236,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // --- 5. Message Builders ---
+  // --- 4. Message Builders (Same as original) ---
   Widget _buildMessage(Message msg) {
     bool isMe = msg.senderId == _currentUserId;
 
@@ -308,7 +246,7 @@ class _ChatPageState extends State<ChatPage> {
       case "image":
         return _buildImageBubble(msg, isMe);
       default:
-        return const SizedBox.shrink(); // Ignore system for now or implement similarly
+        return const SizedBox.shrink();
     }
   }
 
@@ -380,7 +318,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // --- 6. Main Build ---
   @override
   Widget build(BuildContext context) {
     if (_isLoadingChannel) {
@@ -394,7 +331,7 @@ class _ChatPageState extends State<ChatPage> {
     if (_channel == null) {
       return Scaffold(
         appBar: AppBar(title: const Text("Error")),
-        body: const Center(child: Text("Could not connect to chat.")),
+        body: const Center(child: Text("Could not connect to chat history.")),
       );
     }
 
@@ -404,7 +341,6 @@ class _ChatPageState extends State<ChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Chat Area
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
@@ -413,78 +349,18 @@ class _ChatPageState extends State<ChatPage> {
                 itemBuilder: (context, index) => _buildMessage(messages[index]),
               ),
             ),
-            
-            // Input Area
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    offset: const Offset(0, -2),
-                    blurRadius: 10,
-                    color: Colors.black.withOpacity(0.05),
-                  )
-                ],
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: _sendImageMessage,
-                    icon: const Icon(Icons.add_photo_alternate_rounded, color: AppTheme.primaryColor),
-                  ),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: TextField(
-                        controller: _textController,
-                        decoration: const InputDecoration(
-                          hintText: "Message...",
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10),
-                        ),
-                        minLines: 1,
-                        maxLines: 4,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _sendTextMessage(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      onPressed: _sendTextMessage,
-                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
-      // Scroll to bottom FAB
       floatingActionButton: _showScrollToBottom
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 70), // Push up above input
-              child: SizedBox(
-                height: 40,
-                width: 40,
-                child: FloatingActionButton(
-                  backgroundColor: Colors.white,
-                  elevation: 4,
-                  onPressed: _scrollToBottom,
-                  child: const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryColor),
-                ),
+          ? SizedBox(
+              height: 40,
+              width: 40,
+              child: FloatingActionButton(
+                backgroundColor: Colors.white,
+                elevation: 4,
+                onPressed: _scrollToBottom,
+                child: const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryColor),
               ),
             )
           : null,

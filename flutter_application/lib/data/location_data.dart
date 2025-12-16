@@ -13,7 +13,7 @@ class LocationData {
     "Putrajaya",
     "Sabah",
     "Sarawak",
-    "Selangor",
+    "Selangor"
   ];
 
   // Nested map: State -> District -> List of Towns/Cities (from your TOWN MEANS)

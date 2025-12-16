@@ -15,17 +15,20 @@ from routes.rent_route import rent_bp
 from flask_cors import CORS
 from flask import Flask, send_from_directory
 import os
+from scheduler import start_scheduler
+from datetime import datetime
 
-# Initialize Flask app
+
+# Initialize Flask
 app = Flask(__name__)
-CORS(app)  
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Initialize DB
 init_db(app)
 with app.app_context():
     db.create_all()
 
-# Uploads folder configuration
+# Upload folder
 app.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "uploads")
 
 # Register Blueprints
@@ -37,6 +40,12 @@ app.register_blueprint(user_bp)
 app.register_blueprint(rent_bp)
 
 
-# Run the app
+
+
+with app.app_context():
+    start_scheduler(app)
+
+
+# Run APP
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

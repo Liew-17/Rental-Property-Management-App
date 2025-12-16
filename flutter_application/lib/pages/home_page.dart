@@ -5,6 +5,7 @@ import 'package:flutter_application/models/residence.dart';
 import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/pages/property_detail_page.dart';
 import 'package:flutter_application/services/property_service.dart';
+import 'package:flutter_application/services/user_service.dart';
 import 'package:flutter_application/theme.dart';
 
 class HomePage extends StatefulWidget {
@@ -135,7 +136,10 @@ class _HomePageState extends State<HomePage> {
                 },
                 onFavoriteToggle: (newValue) {
                   setState(() {
-                    residence.isFavorited = newValue;
+                    residence.isFavourited = newValue;
+                    UserService.toggleFavourite(  
+                      residence.id  
+                    );
                   });
                 },
               ),

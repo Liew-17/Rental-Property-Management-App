@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/action_button.dart';
 import 'package:flutter_application/models/property.dart';
 import 'package:flutter_application/pages/edit_property_page.dart';
+import 'package:flutter_application/pages/leases_page.dart';
 import 'package:flutter_application/pages/listing_management_page.dart';
+import 'package:flutter_application/pages/pay_rent_page.dart';
+import 'package:flutter_application/pages/request_list_page.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/services/property_service.dart';
+import 'package:flutter_application/theme.dart';
 
 enum PropertyMode { owned, rented }
 
 class PropertyManagementPage extends StatefulWidget {
-  final int propertyId;     // only pass ID now
+  final int propertyId;
   final PropertyMode mode;
 
   const PropertyManagementPage({
@@ -36,155 +40,279 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
     setState(() => loading = true);
 
     try {
-      final fullProperty =
-          await PropertyService.getDetails(widget.propertyId);
-      setState(() {
-        property = fullProperty;
-        loading = false;
-      });
+      final fullProperty = await PropertyService.getDetails(widget.propertyId);
+      if (mounted) {
+        setState(() {
+          property = fullProperty;
+          loading = false;
+        });
+      }
     } catch (e) {
       debugPrint("Failed to load property: $e");
-      setState(() => loading = false);
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
-  } 
+  }
 
   List<Map<String, dynamic>> getActionButtons(BuildContext context) {
     if (widget.mode == PropertyMode.owned) {
       return [
         {
-          'icon': Icons.edit,
-          'label': 'Edit',
+          'icon': Icons.edit_rounded,
+          'label': 'Edit Info',
           'action': () {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) =>
-                    EditPropertyPage(propertyId: widget.propertyId),
+                builder: (_) => EditPropertyPage(propertyId: widget.propertyId),
               ),
-            ).then((_) {
-              _loadProperty(); // refresh after pop
-            });
+            ).then((_) => _loadProperty());
           }
         },
-        {'icon': Icons.people, 'label': 'Tenant Record', 'action': () {}},
-        {'icon': Icons.chair, 'label': 'Furniture List', 'action': () {}},
-        {'icon': Icons.list_alt, 'label': 'Manage Listing', 'action': () {
-              Navigator.push(
+        {
+          'icon': Icons.people_alt_rounded, 
+          'label': 'Requests', 
+          'action': () {
+            Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) =>
-                    ListingManagementPage(propertyId: widget.propertyId),
+                builder: (_) => RequestListPage(propertyId: widget.propertyId),
               ),
             );
-        }},
-        {'icon': Icons.report, 'label': 'Reported Issues', 'action': () {}},
+          }
+        },
+        {
+          'icon': Icons.list_alt_rounded, 
+          'label': 'Listing', 
+          'action': () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ListingManagementPage(propertyId: widget.propertyId),
+              ),
+            ).then((_) => _loadProperty());
+          }
+        },
+        {
+          'icon': Icons.history_rounded, 
+          'label': 'Tenant Record', 
+          'action': () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LeasePage(propertyId: widget.propertyId),
+              ),
+            ).then((_) => _loadProperty());
+          }},
+        {'icon': Icons.report_gmailerrorred_rounded, 'label': 'Issues', 'action': () {}},
+        {'icon': Icons.analytics_rounded, 'label': 'Analytics', 'action': () {}},
       ];
     } else {
       return [
-        {'icon': Icons.visibility, 'label': 'View Details', 'action': () {}},
-        {'icon': Icons.message, 'label': 'Contact Owner', 'action': () {}},
-        {'icon': Icons.payment, 'label': 'Pay Rent', 'action': () {}},
-        {'icon': Icons.report, 'label': 'Report Issue', 'action': () {}},
-        {'icon': Icons.assignment, 'label': 'View Contract', 'action': () {}},
+        {'icon': Icons.description_rounded, 'label': 'Contract', 'action': () {}},
+        {'icon': Icons.payment_rounded, 'label': 'Pay Rent', 'action': () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PayRentPage(propertyId: widget.propertyId),
+              ),
+            ).then((_) => _loadProperty());
+          }
+        },
+        {'icon': Icons.chat_bubble_rounded, 'label': 'Chat Owner', 'action': () {}},
+        {'icon': Icons.report_rounded, 'label': 'Report Issue', 'action': () {}},
       ];
     }
+  }
+
+  String _getLocationString() {
+    if (property == null) return "";
+    final parts = [property!.district, property!.city, property!.state]
+        .where((s) => s != null && s.isNotEmpty)
+        .toList();
+    return parts.isEmpty ? "Location not available" : parts.join(', ');
   }
 
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (property == null) {
-      return const Scaffold(
-        body: Center(child: Text("Failed to load property")),
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(title: const Text("Error")),
+        body: const Center(child: Text("Failed to load property")),
       );
     }
 
     final buttons = getActionButtons(context);
+    final statusColor = AppTheme.getStatusColor(property!.status);
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: true, 
+      backgroundColor: Colors.grey[50], 
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-      ),
-      body: Column(
-        children: [
-          // Thumbnail
-          property!.thumbnailUrl != null &&
-                  property!.thumbnailUrl!.isNotEmpty
-              ? Image.network(
-                  ApiService.buildImageUrl(property!.thumbnailUrl!),
-                  height: 250,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 250,
-                      width: double.infinity,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 64),
-                    );
-                  },
-                )
-              : Container(
-                  height: 250,
-                  width: double.infinity,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.image, size: 64),
-                ),
-
-          const SizedBox(height: 8),
-
-          // Name + Status
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  property!.name,
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Status: ${property!.status ?? "Unknown"}",
-                  style:
-                      TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
+        scrolledUnderElevation: 0,
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            shape: BoxShape.circle,
           ),
+          child: const BackButton(color: Colors.white),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // ================= HEADER IMAGE =================
+            Container(
+              height: 280,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                image: (property!.thumbnailUrl != null &&
+                        property!.thumbnailUrl!.isNotEmpty)
+                    ? DecorationImage(
+                        image: NetworkImage(ApiService.buildImageUrl(
+                            property!.thumbnailUrl!)),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: (property!.thumbnailUrl == null ||
+                      property!.thumbnailUrl!.isEmpty)
+                  ? Icon(Icons.image, size: 80, color: Colors.grey[500])
+                  : null,
+            ),
 
-          const SizedBox(height: 4),
+            // ================= INFO SECTION =================
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+              decoration: BoxDecoration(
+                color: AppTheme.secondaryColor, 
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Name
+                  Text(
+                    property!.name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
 
-          // Button Grid
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.count(
-                crossAxisCount: 3,
-                mainAxisSpacing: 4,
-                crossAxisSpacing: 8,
-                childAspectRatio: 0.9,
-                children: buttons
-                    .map(
-                      (b) => ActionButton(
-                        icon: b['icon'],
-                        label: b['label'],
-                        onTap: b['action'],
+                  // Location
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.location_on,
+                          size: 18, color: AppTheme.primaryColor),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          _getLocationString(),
+                          style: TextStyle(
+                              fontSize: 15, 
+                              color: Colors.blueGrey[700],
+                              fontWeight: FontWeight.w500
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    )
-                    .toList(),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Status Chip
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(
+                          color: statusColor.withOpacity(0.5), width: 1.5),
+                    ),
+                    child: Text(
+                      (property!.status ?? "Unknown").toUpperCase(),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 12),
+
+            // ================= ACTIONS GRID =================
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 12), 
+                    child: Text(
+                      "Quick Actions",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                  GridView.builder(
+                    // Removed default padding to bring grid closer to text
+                    padding: EdgeInsets.zero, 
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12, // Reduced spacing slightly
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.95, // Made cards slightly taller
+                    ),
+                    itemCount: buttons.length,
+                    itemBuilder: (context, index) {
+                      final btn = buttons[index];
+                      return ActionButton(
+                        icon: btn['icon'],
+                        label: btn['label'],
+                        onTap: btn['action'],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }

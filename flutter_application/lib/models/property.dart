@@ -1,10 +1,9 @@
-// Base class
 class Property {
   int id;
   String name;
   String? title;
   String? description;
-  String type; // "residence", "vehicle", "item"
+  String type;
   String? thumbnailUrl;
   bool isVerified;
   String? state;
@@ -12,13 +11,15 @@ class Property {
   String? district;
   String? address;
   double? price;
-  String? status; // "listed", "unlisted", "rented"
+  double? deposit; 
+  String? status; 
   String? rules;
   String? features;
   int? ownerId;
   String? ownerName;
+  String? ownerPicUrl; // <--- Add this
   List<String>? gallery;
-  bool isFavorited;
+  bool isFavourited;
 
   Property({
     required this.id,
@@ -33,13 +34,15 @@ class Property {
     this.district,
     this.address,
     this.price,
+    this.deposit, 
     this.status,
     this.rules,
     this.features,
     this.ownerId,
     this.ownerName,
+    this.ownerPicUrl, 
     this.gallery,
-    this.isFavorited = false,
+    this.isFavourited = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -55,13 +58,15 @@ class Property {
     "district": district,
     "address": address,
     "price": price,
+    "deposit": deposit,
     "status": status,
     "rules": rules,
     "features": features,
     "owner_id": ownerId,
     "owner_name": ownerName,
+    "owner_pic_url": ownerPicUrl, 
     "gallery": gallery,
-    "is_favorited":isFavorited,
+    "is_favorited": isFavourited,
   };
 
   factory Property.fromJson(Map<String, dynamic> json) {
@@ -78,13 +83,15 @@ class Property {
       district: json['district'],
       address: json['address'],
       price: json['price'] != null ? (json['price'] as num).toDouble() : 0,
+      deposit: json['deposit'] != null ? (json['deposit'] as num).toDouble() : 0,
       status: json['status'],
       rules: json['rules'],
       features: json['features'],
       ownerId: json['owner_id'],
       ownerName: json['owner_name'],
+      ownerPicUrl: json['owner_pic_url'], 
       gallery: json['gallery'] != null ? List<String>.from(json['gallery']) : null,
-      isFavorited: json['is_favorited'] ?? false,
+      isFavourited: json['is_favourited'] ?? false,
     );
   }
 }

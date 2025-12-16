@@ -1,10 +1,10 @@
 from models.user import User
 
-def register(uid, username, role="user"):
+def register(uid, username, email, role="user", ):
     user = User.find_by_uid(uid)
 
     if not user:
-        user = User.create(uid, username, role)
+        user = User.create(uid, username, role, email)
     return user
 
 def user_exists(uid):

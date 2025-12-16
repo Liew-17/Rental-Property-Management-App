@@ -9,11 +9,13 @@ def register():
     uid = data.get("uid")
     username = data.get("username")
     role = data.get("role", "user")
+    email = data.get("email")
+
 
     if not uid or not username:
         return jsonify({"error": "uid and username are required"}), 400
 
-    user = auth_service.register(uid, username, role)
+    user = auth_service.register(uid, username, role, email)
 
     return jsonify({
         "uid": user.uid,
@@ -33,11 +35,13 @@ def check_user(uid):
                 "id": user.id,
                 "uid": user.uid,
                 "username": user.username,
+                "email": user.email,
                 "role": user.role,
                 "state": user.state,
                 "city": user.city,
                 "district": user.district,
-                "address": user.address
+                "address": user.address,
+                "profilePicUrl": user.profile_pic_url
             }
         }), 200
     else:

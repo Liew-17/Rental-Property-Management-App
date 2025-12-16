@@ -21,12 +21,11 @@ class Request(db.Model):
     # Workflow status & step control
     current_step = db.Column(db.Integer, default=1)  
     status = db.Column(db.String(50), default="pending")
-    # possible values: pending, reviewing_docs, contract_uploaded, waiting_sign, 
-    # owner_review, deposit_pending, completed, terminated
 
-    # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    first_payment_due = db.Column(db.DateTime, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationship to documents
     documents = db.relationship("RequestDocument", backref="request", lazy=True)
@@ -60,25 +59,21 @@ class RequestDocument(db.Model):
 
     request_id = db.Column(db.Integer, db.ForeignKey("requests.id"), nullable=False)
 
-    step_number = db.Column(db.Integer, nullable=False)  # document belongs to this workflow step
+    step_number = db.Column(db.Integer, nullable=False)
     doc_type = db.Column(db.String(50), nullable=False)
-    # e.g. 'ic_card', 'income_proof', 'contract', 'signed_contract', 'deposit_proof'
-
+    
     original_filename = db.Column(db.String(255), nullable=False)
-
     file_url = db.Column(db.String(500), nullable=False)
-    file_format = db.Column(db.String(10), nullable=False)  # jpg/png/pdf/etc
+    file_format = db.Column(db.String(10), nullable=False) 
 
-    uploaded_by = db.Column(db.String(20), nullable=False)  # 'tenant' / 'owner'
-
-    version = db.Column(db.Integer, default=1)  # contract re-uploads, etc.
+    uploaded_by = db.Column(db.String(20), nullable=False) # tenant/owner
     is_active = db.Column(db.Boolean, default=True)
 
-    updated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
     @classmethod
-    def create(cls, request_id, step_number, doc_type, file_url, original_filename, file_format, uploaded_by, version=1):
+    def create(cls, request_id, step_number, doc_type, file_url, original_filename, file_format, uploaded_by):
         doc = cls(
             request_id=request_id,
             step_number=step_number,
@@ -87,7 +82,6 @@ class RequestDocument(db.Model):
             original_filename=original_filename,
             file_format=file_format,
             uploaded_by=uploaded_by,
-            version=version,
             is_active=True
         )
         db.session.add(doc)

@@ -1,3 +1,7 @@
+from models.favourite import Favourite
+from services import user_service
+from models.lease import Lease
+from models.tenant_record import TenantRecord
 from models.user import User
 from models.property import Property
 from models.property import PropertyImage
@@ -7,8 +11,7 @@ from services.file_service import upload_file
 import uuid
 from typing import Optional
 
-def add_residence_property(
-        
+def add_residence_property(      
     uid,
     name,
     title=None,
@@ -86,6 +89,12 @@ def get_residence_summaries(*,state=None, city=None, district=None, user_id, pag
 
     summaries = []
 
+    user_fav_ids = []
+
+    if user_id:
+        user_fav = Favourite.get_favourites_by_user(user_id)
+        user_fav_ids = [fav.property_id for fav in user_fav]
+
     for prop in props:
         if not isinstance(prop, Residence): #ensure it is residence
             continue
@@ -103,7 +112,7 @@ def get_residence_summaries(*,state=None, city=None, district=None, user_id, pag
             "land_size": prop.land_size,
             "price":prop.price,
             "thumbnail_url": prop.thumbnail_url,
-            "is_favourited": False,  # TODO: implement user-specific favoriting logic
+            "is_favourited": prop.id in user_fav_ids,
             "residence_type": prop.residence_type,
     })
 
@@ -115,7 +124,7 @@ def get_owned_properties(owner_id):
     data = []
 
     for prop in props:
-        if not isinstance(prop, Residence): #ensure it is residence
+        if not isinstance(prop, Residence): 
             continue
 
         data.append({         
@@ -124,14 +133,45 @@ def get_owned_properties(owner_id):
             "title": prop.title,
             "thumbnail_url": prop.thumbnail_url,
             "status": prop.status,
-            "owner_id": owner_id
+            "owner_id": owner_id,
+            "state": prop.state,
+            "city": prop.city,
+            "district": prop.district,
         })
-            
-
 
     return data
 
-def get_residence_details(property_id, by_uid):
+def get_rented_properties(tenant_id):
+    user = User.query.get(tenant_id)
+
+    data = []
+
+    if not user:
+        return data
+    
+    active_leases = [lease for lease in user.leases if lease.status == "active"]
+
+    if not active_leases:
+        return data
+
+    for lease in active_leases:
+        prop = lease.property
+        if not prop:
+            continue
+        data.append({
+            "id": prop.id,
+            "name": prop.name,
+            "title": prop.title,
+            "thumbnail_url": prop.thumbnail_url,
+            "status": prop.status,
+            "state": prop.state,
+            "city": prop.city,
+            "district": prop.district,
+        })
+
+    return data
+
+def get_residence_details(property_id, user_id):
     """  Return residence's details information """
     prop = Property.find_by_id(property_id)
 
@@ -143,6 +183,11 @@ def get_residence_details(property_id, by_uid):
     
     owner: Optional["User"]
     owner = prop.user
+   
+    if user_id:
+        user_fav = Favourite.get_favourites_by_user(user_id)
+        user_fav_ids = [fav.property_id for fav in user_fav]
+
 
     data = {
         "id": prop.id,
@@ -156,13 +201,15 @@ def get_residence_details(property_id, by_uid):
         "district": prop.district,
         "address": prop.address,
         "price": float(prop.price) if prop.price is not None else 0,
+        "deposit": float(prop.deposit) if prop.deposit is not None else 0,
         "status": prop.status,
         "rules": prop.rules,
         "features": prop.features,
         "owner_id": owner.id if owner else None,
         "owner_name": owner.username if owner else None,
+        "owner_pic_url": owner.profile_pic_url if owner else None,
         "gallery": [img.image_url for img in prop.images] if prop.images else [],
-        "is_favorited": False,  # replace with actual logic if needed
+        "is_favourited": prop.id in user_fav_ids,
         "num_bedrooms": prop.num_bedrooms,
         "num_bathrooms": prop.num_bathrooms,
         "land_size": float(prop.land_size) if prop.land_size is not None else 0,
@@ -254,3 +301,81 @@ def list_property(property_id, price, deposit):
     db.session.commit()
 
     return True, "Property updated successfully"
+
+def get_lease(property_id, active_only=True):
+    """
+    Get lease(s) for a property.
+    If active_only=True, only fetch the active lease.
+    If active_only=False, fetch all leases (past and current).
+
+    Returns (success: bool, data: list of dict)
+    """
+    if active_only:
+        # Only active lease
+        leases = Lease.query.filter_by(property_id=property_id, status="active").all()
+    else:
+        # Fetch all leases for the property, excluding 'terminated' status
+        leases = Lease.query.filter(
+            Lease.property_id == property_id, 
+            Lease.status != "terminated"
+        ).all()
+
+    if not leases:
+        return False, "Not lease found"
+
+    data = []
+    for lease in leases:
+        if lease.contract_doc:
+            contract_url = lease.contract_doc.file_url
+            contract_name = lease.contract_doc.original_filename
+
+        if lease.tenant:
+            tenant_name = lease.tenant.username
+            tenant_profile_pic_url = lease.tenant.profile_pic_url
+            
+
+        data.append({
+            "id": lease.id,
+            "start_date": lease.start_date.isoformat(),
+            "end_date": lease.end_date.isoformat() if lease.end_date else None,
+            "termination_date": lease.termination_date.isoformat() if lease.termination_date else None,
+            "monthly_rent": lease.monthly_rent,
+            "deposit_amount": lease.deposit_amount,
+            "gracePeriodDays": lease.gracePeriodDays,
+            "status": lease.status,
+            "contract_url": contract_url,
+            "contract_name": contract_name,
+            "tenant_id": lease.tenant_id,
+            "tenant_name": tenant_name,
+            "tenant_profile_pic_url": tenant_profile_pic_url
+        })
+
+    return True, data
+
+def get_tenant_records(lease_id):
+    """
+    Return only the tenant records for a lease.
+    Returns (success: bool, data: list)
+    """
+    lease = Lease.query.filter_by(id=lease_id).first()
+
+    if not lease:
+        return False, "Lease not found"
+
+    records = TenantRecord.query.filter_by(lease_id=lease_id)\
+                                .order_by(TenantRecord.start_date)\
+                                .all()
+
+    data = []
+    for r in records:
+        data.append({
+            "id": r.id,
+            "month": r.month,
+            "start_date": r.start_date.isoformat(),
+            "due_date": r.due_date.isoformat(),
+            "paid_at": r.paid_at.isoformat() if r.paid_at else None,
+            "amount_paid": r.amount_paid,
+            "status": r.status
+        })
+
+    return True, data
