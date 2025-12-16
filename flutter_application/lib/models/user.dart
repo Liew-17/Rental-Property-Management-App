@@ -16,6 +16,7 @@ class AppUser {
   String? state;
   String? city;
   String? district;
+  String role = 'tenant';
 
   bool get isLoggedIn => id != null;
 
@@ -24,7 +25,8 @@ class AppUser {
     id = null;
     name = null;
     email = null;
-    profilePicUrl = null; // <--- Reset this field
+    profilePicUrl = null; 
+    role = 'tenant';
 
     // Reset location
     state = null;

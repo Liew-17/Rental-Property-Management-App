@@ -8,7 +8,9 @@ import 'package:flutter_application/theme.dart';
 import 'package:image_picker/image_picker.dart'; // Import ImagePicker
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final VoidCallback? onRoleChanged;
+
+  const ProfilePage({super.key, this.onRoleChanged});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -48,53 +50,132 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _toggleRole(Set<String> newSelection) {
+    setState(() {
+      AppUser().role = newSelection.first;
+    });
+
+    widget.onRoleChanged?.call(); 
+    
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Switched to ${AppUser().role} mode"),
+        duration: const Duration(seconds: 1),
+        backgroundColor: AppTheme.primaryColor,
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = AppUser();
+    final isOwner = user.role == 'owner';
+    final safePadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-            _buildProfileHeader(user),
-            const SizedBox(height: 30),
-            
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.list_alt_rounded,
-                    title: 'My Requests',
-                    subtitle: 'View status of your rental applications',
-                    onTap: () {
-                      Navigator.push(
+      body: Stack(
+        children: [
+          // Main Scrollable Content
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 60), // Increased top spacing for header
+                _buildProfileHeader(user),
+                const SizedBox(height: 30),
+                
+                // Menu Items
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      // Only show My Requests if NOT owner (Tenant Mode)
+                      if (!isOwner) ...[
+                        _buildMenuItem(
+                          context,
+                          icon: Icons.list_alt_rounded,
+                          title: 'My Requests',
+                          subtitle: 'View status of your rental applications',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const MyRequestPage()),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 15),
+                      ],
+                      
+                      _buildMenuItem(
                         context,
-                        MaterialPageRoute(builder: (context) => const MyRequestPage()),
-                      );
-                    },
+                        icon: Icons.favorite_rounded,
+                        title: 'My Favorites',
+                        subtitle: 'Properties you have saved',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const MyFavouritePage()),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 15),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.favorite_rounded,
-                    title: 'My Favorites',
-                    subtitle: 'Properties you have saved',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MyFavouritePage()),
-                      );
-                    },
-                  ),
-                ],
+                ),
+                
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+
+          // Floating Role Switcher (Top Right)
+          Positioned(
+            top: safePadding + 16,
+            right: 20,
+            child: Material(
+              color: Colors.white,
+              elevation: 4,
+              shadowColor: Colors.black.withOpacity(0.2), 
+              borderRadius: BorderRadius.circular(30),
+              child:SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(
+                  value: 'tenant',
+                  label: Text('Tenant'),
+                  icon: Icon(Icons.person_outline),
+                ),
+                ButtonSegment(
+                  value: 'owner',
+                  label: Text('Owner'),
+                  icon: Icon(Icons.home_work_outlined),
+                ),
+              ],
+              selected: {user.role},
+              onSelectionChanged: _toggleRole,
+              style: ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                  (Set<WidgetState> states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppTheme.primaryColor.withOpacity(0.2);
+                    }
+                    return Colors.white;
+                  },
+                ),
+                foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                  (Set<WidgetState> states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppTheme.primaryColor;
+                    }
+                    return Colors.grey;
+                  },
+                ),
               ),
             ),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }

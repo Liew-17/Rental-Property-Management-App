@@ -7,7 +7,7 @@ import 'package:flutter_application/services/api_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:web/web.dart' as html;
-import 'package:flutter_application/custom_widgets/file_preview_page.dart'; // Import the new page
+// Import the new page
 
 class FileList extends StatefulWidget {
   final List<RequestDocument> files;

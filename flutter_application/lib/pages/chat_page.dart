@@ -12,11 +12,13 @@ import 'package:flutter_application/services/chat_service.dart';
 class ChatPage extends StatefulWidget {
   final int propertyId;
   final int tenantId;
+  final String? channelType; // 1. Add this parameter
 
   const ChatPage({
     super.key,
     required this.propertyId,
     required this.tenantId,
+    this.channelType, // 2. Add to constructor
   });
 
   @override
@@ -56,6 +58,7 @@ class _ChatPageState extends State<ChatPage> {
       final channel = await ChatService.initiateChannel(
         propertyId: widget.propertyId,
         tenantId: widget.tenantId,
+        type: widget.channelType ?? 'query',
       );
 
       if (channel != null) {

@@ -43,7 +43,9 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
       if (mounted) {
         setState(() {
           // Check if viewed by owner
-          _resolvedViewOnly = widget.viewOnly ? true : (residence.ownerId == AppUser().id); 
+          _resolvedViewOnly = widget.viewOnly 
+              || (residence.ownerId == AppUser().id)
+              || (AppUser().role == 'owner');
         }); 
       }
     });
@@ -317,7 +319,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                                           _infoTile(Icons.bathtub, '${residence.numBathrooms ?? '-'}', 'Bathrooms'),
                                           Container(width: 1, height: 40, color: Colors.grey[300]),
                                           _infoTile(Icons.square_foot, 
-                                            residence.landSize != null ? '${residence.landSize!.toStringAsFixed(0)}' : '-', 
+                                            residence.landSize != null ? residence.landSize!.toStringAsFixed(0) : '-', 
                                             'Sqft'
                                           ),
                                         ],

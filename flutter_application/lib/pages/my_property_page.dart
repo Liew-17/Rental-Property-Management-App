@@ -19,14 +19,22 @@ class _MyPropertyPageState extends State<MyPropertyPage>
   late TabController _tabController;
   
   // State variables
-  List<Property> _ownedProperties = [];
-  List<Property> _rentedProperties = [];
+  List<Property> _ownedUnlisted = [];
+  List<Property> _ownedRenting = [];
+  List<Property> _ownedRented = [];
+  
+  List<Property> _tenantRented = [];
+  
   bool _isLoading = true;
+  String _currentRole = 'tenant';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _currentRole = AppUser().role;
+  
+    int tabLength = _currentRole == 'owner' ? 3 : 1;
+    _tabController = TabController(length: tabLength, vsync: this);
     _loadProperties();
   }
 
@@ -36,7 +44,6 @@ class _MyPropertyPageState extends State<MyPropertyPage>
     super.dispose();
   }
 
-  /// Fetch both owned and rented properties
   Future<void> _loadProperties() async {
     setState(() {
       _isLoading = true;
@@ -45,18 +52,27 @@ class _MyPropertyPageState extends State<MyPropertyPage>
     try {
       final userId = AppUser().id ?? 0;
       
-      // Fetch both lists in parallel
-      final results = await Future.wait([
-        PropertyService.getOwnedProperties(userId),
-        PropertyService.getRentedProperties(userId),
-      ]);
+      if (_currentRole == 'owner') {
 
-      if (mounted) {
-        setState(() {
-          _ownedProperties = results[0];
-          _rentedProperties = results[1];
-          _isLoading = false;
-        });
+        final owned = await PropertyService.getOwnedProperties(userId);
+        if (mounted) {
+          setState(() {
+            _ownedUnlisted = owned.where((p) => 
+                p.status == 'unlisted' || p.status == 'pending' || p.status == 'rejected').toList();
+            _ownedRenting = owned.where((p) => p.status == 'renting').toList();
+            _ownedRented = owned.where((p) => p.status == 'rented').toList();
+            _isLoading = false;
+          });
+        }
+      } else {
+
+        final rented = await PropertyService.getRentedProperties(userId);
+        if (mounted) {
+          setState(() {
+            _tenantRented = rented;
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       debugPrint("Error loading properties: $e");
@@ -84,108 +100,119 @@ class _MyPropertyPageState extends State<MyPropertyPage>
     );
   }
 
+  Widget _buildPropertyList(List<Property> properties, PropertyMode mode) {
+    if (properties.isEmpty) {
+      return _buildEmptyState("No properties found.", Icons.home_work_outlined);
+    }
+    return RefreshIndicator(
+      onRefresh: _loadProperties,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: properties.length,
+        itemBuilder: (context, i) {
+          final p = properties[i];
+          if (mode == PropertyMode.owned) {
+            return OwnedPropertyCard(
+              property: p,
+              onView: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PropertyManagementPage(
+                      propertyId: p.id,
+                      mode: PropertyMode.owned,
+                    ),
+                  ),
+                ).then((_) => _loadProperties());
+              },
+              onDelete: () {
+                 // Delete logic placeholder
+              },
+            );
+          } else {
+            return RentedPropertyCard(
+              property: p,
+              onView: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PropertyManagementPage(
+                      propertyId: p.id,
+                      mode: PropertyMode.rented,
+                    ),
+                  ),
+                ).then((_) => _loadProperties());
+              },
+            );
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+
+    if (AppUser().role != _currentRole) {
+       _currentRole = AppUser().role;
+       int tabLength = _currentRole == 'owner' ? 3 : 1;
+       _tabController.dispose();
+       _tabController = TabController(length: tabLength, vsync: this);
+       _loadProperties(); // Reload data for new role
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
         centerTitle: true,
-        title: const Text(
-          'My Properties',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          _currentRole == 'owner' ? 'My Properties' : 'My Rentals',
+          style: const TextStyle(color: Colors.white),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          tabs: const [
-            Tab(text: 'Owned'),
-            Tab(text: 'Rented'),
-          ],
-        ),
+        bottom: _currentRole == 'owner' 
+          ? TabBar(
+              controller: _tabController,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              indicatorColor: Colors.white,
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(text: 'Unlisted'),
+                Tab(text: 'Renting'),
+                Tab(text: 'Rented'),
+              ],
+            )
+          : null, // No tabs for tenant
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.primaryColor,
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AddPropertyPage()),
-          );
+      floatingActionButton: _currentRole == 'owner' 
+          ? FloatingActionButton(
+              backgroundColor: AppTheme.primaryColor,
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => AddPropertyPage()),
+                );
 
-          if (result == true) {
-            _loadProperties(); // Refresh list after adding
-          }
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+                if (result == true) {
+                  _loadProperties(); 
+                }
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null, // Tenants usually don't add properties
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                // Tab 1: Owned Properties
-                _ownedProperties.isEmpty
-                    ? _buildEmptyState('No owned properties yet.', Icons.home_work_outlined)
-                    : RefreshIndicator(
-                        onRefresh: _loadProperties,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _ownedProperties.length,
-                          itemBuilder: (context, i) {
-                            final p = _ownedProperties[i];
-                            return OwnedPropertyCard(
-                              property: p,
-                              onView: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => PropertyManagementPage(
-                                      propertyId: p.id,
-                                      mode: PropertyMode.owned,
-                                    ),
-                                  ),
-                                ).then((_) => _loadProperties());
-                              },
-                              onDelete: () {
-                                // TODO: Implement delete logic
-                              },
-                            );
-                          },
-                        ),
-                      ),
-
-                // Tab 2: Rented Properties
-                _rentedProperties.isEmpty
-                    ? _buildEmptyState('No rented properties yet.', Icons.vpn_key_outlined)
-                    : RefreshIndicator(
-                        onRefresh: _loadProperties,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _rentedProperties.length,
-                          itemBuilder: (context, i) {
-                            final p = _rentedProperties[i];
-                            return RentedPropertyCard(
-                              property: p,
-                              onView: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => PropertyManagementPage(
-                                      propertyId: p.id,
-                                      mode: PropertyMode.rented,
-                                    ),
-                                  ),
-                                ).then((_) => _loadProperties());
-                              },
-                            );
-                          },
-                        ),
-                      ),
-              ],
-            ),
+          : _currentRole == 'owner'
+              ? TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildPropertyList(_ownedUnlisted, PropertyMode.owned),
+                    _buildPropertyList(_ownedRenting, PropertyMode.owned),
+                    _buildPropertyList(_ownedRented, PropertyMode.owned),
+                  ],
+                )
+              : _buildPropertyList(_tenantRented, PropertyMode.rented),
     );
   }
 }

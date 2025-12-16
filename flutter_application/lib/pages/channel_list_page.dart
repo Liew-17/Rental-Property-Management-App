@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application/models/channel_preview.dart';
 import 'package:flutter_application/models/user.dart';
@@ -18,10 +19,12 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
   late TabController _tabController;
   List<ChannelPreview> _allChannels = [];
   bool _isLoading = true;
+  String _currentRole = 'tenant';
 
   @override
   void initState() {
     super.initState();
+    _currentRole = AppUser().role;
     _tabController = TabController(length: 2, vsync: this);
     _loadData();
   }
@@ -42,8 +45,43 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final tenantChats = _allChannels.where((c) => c.myRole == 'tenant').toList();
-    final ownerChats = _allChannels.where((c) => c.myRole == 'owner').toList();
+
+    if (AppUser().role != _currentRole) {
+       _currentRole = AppUser().role;
+       _loadData(); // Re-fetch or re-filter
+    }
+
+    // Filter based on Role and Type
+    List<ChannelPreview> listTab1 = [];
+    List<ChannelPreview> listTab2 = [];
+    String titleTab1 = "";
+    String titleTab2 = "";
+    String emptyTab1 = "";
+    String emptyTab2 = "";
+
+    if (_currentRole == 'owner') {
+      // Owner Mode
+      // Tab 1: Queries received 
+      listTab1 = _allChannels.where((c) => c.myRole == 'owner' && c.type == 'query').toList();
+      titleTab1 = "Enquiries";
+      emptyTab1 = "No new enquiries.";
+
+      // Tab 2: My Properties/Tenants 
+      listTab2 = _allChannels.where((c) => c.myRole == 'owner' && c.type == 'lease').toList();
+      titleTab2 = "Tenants";
+      emptyTab2 = "No active tenant chats.";
+    } else {
+      // Tenant Mode
+      // Tab 1: My Queries sent 
+      listTab1 = _allChannels.where((c) => c.myRole == 'tenant' && c.type == 'query').toList();
+      titleTab1 = "My Queries";
+      emptyTab1 = "You haven't sent any enquiries.";
+
+      // Tab 2: My Rentals/Owners 
+      listTab2 = _allChannels.where((c) => c.myRole == 'tenant' && c.type == 'lease').toList();
+      titleTab2 = "Owners";
+      emptyTab2 = "No active owner chats.";
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -62,9 +100,9 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
           indicatorWeight: 3,
-          tabs: const [
-            Tab(text: "My Enquiries"),
-            Tab(text: "My Properties"),
+          tabs: [
+            Tab(text: titleTab1),
+            Tab(text: titleTab2),
           ],
         ),
       ),
@@ -73,8 +111,8 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
         : TabBarView(
             controller: _tabController,
             children: [
-              _buildChatList(tenantChats, "No active enquiries."),
-              _buildChatList(ownerChats, "No messages from tenants."),
+              _buildChatList(listTab1, emptyTab1),
+              _buildChatList(listTab2, emptyTab2),
             ],
           ),
     );
@@ -96,7 +134,7 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
 
     return ListView.separated(
       itemCount: channels.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, indent: 82), // Indent divider to match text
+      separatorBuilder: (_, __) => const Divider(height: 1, indent: 82), 
       itemBuilder: (context, index) {
         return _buildChatTile(channels[index]);
       },
@@ -125,20 +163,20 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         onTap: () async {
-          final targetTenantId = chat.myRole == 'tenant' 
-              ? AppUser().id! 
-              : chat.otherUserId;
+          
+          final tenantIdParam = chat.myRole == 'owner' ? chat.otherUserId : AppUser().id!;
 
           await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => ChatPage(
                 propertyId: chat.propertyId,
-                tenantId: targetTenantId,
+                tenantId: tenantIdParam,
+                channelType: isLease ? 'lease' : 'query',
               ),
             ),
           );
-          _loadData(); // Refresh list on return
+          _loadData(); 
         },
         leading: Stack(
           children: [
@@ -152,7 +190,6 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
                   ? const Icon(Icons.person, color: Colors.grey) 
                   : null,
             ),
-            // Property Thumbnail Badge
             if (chat.propertyImage != null)
               Positioned(
                 right: 0,

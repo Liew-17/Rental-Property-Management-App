@@ -4,7 +4,6 @@ import 'package:flutter_application/models/lease.dart';
 import 'package:flutter_application/models/tenant_record.dart';
 import 'package:flutter_application/models/user.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application/models/residence.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:image_picker/image_picker.dart';

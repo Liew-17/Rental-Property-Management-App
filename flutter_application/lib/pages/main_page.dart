@@ -1,12 +1,11 @@
+
 import 'package:flutter/material.dart';
+import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/pages/channel_list_page.dart';
-import 'package:flutter_application/pages/my_request_page.dart';
-import 'package:flutter_application/pages/request_list_page.dart';
 import 'package:flutter_application/theme.dart';
 import 'profile_page.dart';
 import 'my_property_page.dart';
 import 'home_page.dart';
-
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -17,16 +16,23 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
+  late final List<Widget> _pages;
 
-  // Define pages
-  final List<Widget> _pages = [
-    const HomePage(),
-    const MyPropertyPage(),
-    const ChannelListPage(),
-    const ProfilePage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const HomePage(),
+      const MyPropertyPage(),
+      const ChannelListPage(),
+      ProfilePage(
+        onRoleChanged: () {
+          setState(() {});
+        },
+      ),
+    ];
+  }
 
-  // Handle tap on bottom navigation
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -35,28 +41,30 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    String userRole = AppUser().role;
+
     return Scaffold(
-      body: _pages[_selectedIndex], // show current page
+      body: _pages[_selectedIndex], 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed, // show all 4 items
+        type: BottomNavigationBarType.fixed,
         selectedItemColor: AppTheme.primaryColor,
         unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.business),
-            label: 'My Property',
+            icon: const Icon(Icons.business),
+            label: userRole == 'owner' ? 'My Property' : 'My Rentals',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.chat),
             label: 'Chat',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
           ),           

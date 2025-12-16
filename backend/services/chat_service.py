@@ -77,17 +77,50 @@ def get_messages(channel_id: int, limit=None, offset=None):
     except Exception as e:
         return False, str(e), None
 
-def initiate_channel(property_id, tenant_id, type = 'query'):
+def initiate_channel(property_id, tenant_id, type='query'):
     """
-    Get an existing open channel for this property/tenant, or create a new one.
-    Returns: (success, message, data_dict)
+    Get an existing open channel.
+    Fix: If type is 'query' but a 'lease' channel exists, return the lease channel
+    to prevent duplicate channels for the same pair.
     """
     try:
+        # 1. Prioritize finding an existing LEASE channel if the request is for 'query'
+        # This ensures that once a tenant rents a place, all 'queries' go to the lease chat.
+        if type == 'query':
+            existing_lease_channel = Channel.query.filter_by(
+                property_id=property_id,
+                tenant_id=tenant_id,
+                status='open',
+                type='lease'
+            ).first()
+            
+            if existing_lease_channel:
+                # Return the lease channel immediately
+                prop = existing_lease_channel.property
+                owner = prop.user if prop else None
+                tenant = existing_lease_channel.tenant
+                
+                return True, "Active lease channel retrieved", {
+                    "id": existing_lease_channel.id,
+                    "status": existing_lease_channel.status,
+                    "type": existing_lease_channel.type, # This will return 'lease'
+                    "property_id": prop.id if prop else None,
+                    "property_title": prop.title if prop else None,
+                    "property_name": prop.name if prop else None,
+                    "owner_id": owner.id if owner else None,
+                    "owner_name": owner.username if owner else "Unknown",
+                    "owner_profile": owner.profile_pic_url if owner else None,
+                    "tenant_id": tenant.id if tenant else None,
+                    "tenant_name": tenant.username if tenant else "Unknown",
+                    "tenant_profile": tenant.profile_pic_url if tenant else None,
+                }
+
+
         channel = Channel.query.filter_by(
             property_id=property_id, 
             tenant_id=tenant_id, 
             status='open',
-            type= type
+            type=type
         ).first()
 
         created_new = False
@@ -100,7 +133,8 @@ def initiate_channel(property_id, tenant_id, type = 'query'):
             channel = Channel.create_channel(
                 property_id=property_id,
                 tenant_id=tenant_id,
-                status='open'
+                status='open',
+                type=type
             )
             created_new = True
 
@@ -136,9 +170,15 @@ def get_user_channels(user_id):
     Includes the latest message for preview.
     """
     try:
-        tenant_channels = Channel.query.filter_by(tenant_id=user_id ).all()
+        tenant_channels = Channel.query.filter(
+            Channel.tenant_id == user_id,
+            Channel.status != 'closed'
+        ).all()
 
-        owner_channels = Channel.query.join(Property).filter(Property.user_id == user_id).all()
+        owner_channels = Channel.query.join(Property).filter(
+            Property.user_id == user_id,
+            Channel.status != 'closed'
+        ).all()
 
         all_channels = []
         
