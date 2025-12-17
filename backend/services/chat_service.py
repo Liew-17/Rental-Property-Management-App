@@ -84,8 +84,7 @@ def initiate_channel(property_id, tenant_id, type='query'):
     to prevent duplicate channels for the same pair.
     """
     try:
-        # 1. Prioritize finding an existing LEASE channel if the request is for 'query'
-        # This ensures that once a tenant rents a place, all 'queries' go to the lease chat.
+        # Check if a lease channel already exists
         if type == 'query':
             existing_lease_channel = Channel.query.filter_by(
                 property_id=property_id,
@@ -115,7 +114,7 @@ def initiate_channel(property_id, tenant_id, type='query'):
                     "tenant_profile": tenant.profile_pic_url if tenant else None,
                 }
 
-
+        
         channel = Channel.query.filter_by(
             property_id=property_id, 
             tenant_id=tenant_id, 

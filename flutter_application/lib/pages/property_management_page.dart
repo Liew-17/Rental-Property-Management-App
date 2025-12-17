@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/action_button.dart';
 import 'package:flutter_application/models/property.dart';
 import 'package:flutter_application/pages/edit_property_page.dart';
+import 'package:flutter_application/pages/issue_list_page.dart';
 import 'package:flutter_application/pages/leases_page.dart';
 import 'package:flutter_application/pages/listing_management_page.dart';
 import 'package:flutter_application/pages/pay_rent_page.dart';
+import 'package:flutter_application/pages/report_issue_page.dart';
 import 'package:flutter_application/pages/request_list_page.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/services/property_service.dart';
@@ -105,7 +107,15 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
               ),
             ).then((_) => _loadProperty());
           }},
-        {'icon': Icons.report_gmailerrorred_rounded, 'label': 'Issues', 'action': () {}},
+        {'icon': Icons.report_gmailerrorred_rounded, 'label': 'Issues', 'action': () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => IssueListPage(propertyId: widget.propertyId,isOwnerMode: true,),
+              ),
+            ).then((_) => _loadProperty());
+            
+        }},
         {'icon': Icons.analytics_rounded, 'label': 'Analytics', 'action': () {}},
       ];
     } else {
@@ -121,7 +131,24 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
           }
         },
         {'icon': Icons.chat_bubble_rounded, 'label': 'Chat Owner', 'action': () {}},
-        {'icon': Icons.report_rounded, 'label': 'Report Issue', 'action': () {}},
+        {'icon': Icons.report_rounded, 'label': 'Report Issue', 'action': () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ReportIssuePage(propertyId: widget.propertyId),
+              ),
+            ).then((_) => _loadProperty());
+
+        }},
+        {'icon': Icons.report_rounded, 'label': 'My Issue', 'action': () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => IssueListPage(propertyId: widget.propertyId,isOwnerMode: false,),
+              ),
+            ).then((_) => _loadProperty());
+
+        }},
       ];
     }
   }
@@ -173,7 +200,7 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ================= HEADER IMAGE =================
+
             Container(
               height: 280,
               width: double.infinity,
@@ -194,7 +221,7 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
                   : null,
             ),
 
-            // ================= INFO SECTION =================
+            // Info Section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),

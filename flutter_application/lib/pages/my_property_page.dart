@@ -22,6 +22,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
   List<Property> _ownedUnlisted = [];
   List<Property> _ownedRenting = [];
   List<Property> _ownedRented = [];
+  List<Property> _ownedListed = [];
   
   List<Property> _tenantRented = [];
   
@@ -33,7 +34,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
     super.initState();
     _currentRole = AppUser().role;
   
-    int tabLength = _currentRole == 'owner' ? 3 : 1;
+    int tabLength = _currentRole == 'owner' ? 4 : 1;
     _tabController = TabController(length: tabLength, vsync: this);
     _loadProperties();
   }
@@ -59,6 +60,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
           setState(() {
             _ownedUnlisted = owned.where((p) => 
                 p.status == 'unlisted' || p.status == 'pending' || p.status == 'rejected').toList();
+            _ownedListed = owned.where((p) => p.status == 'listed').toList();
             _ownedRenting = owned.where((p) => p.status == 'renting').toList();
             _ownedRented = owned.where((p) => p.status == 'rented').toList();
             _isLoading = false;
@@ -155,7 +157,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
 
     if (AppUser().role != _currentRole) {
        _currentRole = AppUser().role;
-       int tabLength = _currentRole == 'owner' ? 3 : 1;
+       int tabLength = _currentRole == 'owner' ? 4 : 1;
        _tabController.dispose();
        _tabController = TabController(length: tabLength, vsync: this);
        _loadProperties(); // Reload data for new role
@@ -179,6 +181,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
               indicatorWeight: 3,
               tabs: const [
                 Tab(text: 'Unlisted'),
+                Tab(text: 'Listed'),
                 Tab(text: 'Renting'),
                 Tab(text: 'Rented'),
               ],
@@ -208,6 +211,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
                   controller: _tabController,
                   children: [
                     _buildPropertyList(_ownedUnlisted, PropertyMode.owned),
+                    _buildPropertyList(_ownedListed, PropertyMode.owned),
                     _buildPropertyList(_ownedRenting, PropertyMode.owned),
                     _buildPropertyList(_ownedRented, PropertyMode.owned),
                   ],
