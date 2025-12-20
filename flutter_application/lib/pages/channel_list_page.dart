@@ -5,6 +5,7 @@ import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/pages/chat_page.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/services/chat_service.dart';
+import 'package:flutter_application/services/socket_service.dart';
 import 'package:flutter_application/theme.dart';
 import 'package:intl/intl.dart';
 
@@ -27,6 +28,10 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
     _currentRole = AppUser().role;
     _tabController = TabController(length: 2, vsync: this);
     _loadData();
+
+    SocketService.onEvent('refresh_chat', (data) {
+        _loadData(); 
+    });
   }
 
   Future<void> _loadData() async {

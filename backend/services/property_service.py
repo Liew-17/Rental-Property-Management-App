@@ -4,12 +4,14 @@ from models.lease import Lease
 from models.tenant_record import TenantRecord
 from models.user import User
 from models.property import Property
+from models.request import Request
 from models.property import PropertyImage
 from models.property import Residence
 from database import db
 from services.file_service import upload_file
 import uuid
 from typing import Optional
+from sqlalchemy import or_, and_
 
 def add_residence_property(      
     uid,
@@ -117,6 +119,100 @@ def get_residence_summaries(*,state=None, city=None, district=None, user_id, pag
     })
 
     return summaries, length
+
+def search_residences(
+    user_id = None,
+    query=None,
+    state=None,
+    city=None,
+    district=None,
+    min_price=None,
+    max_price=None,
+    residence_type=None,
+    min_bedrooms=None,
+    min_bathrooms=None,
+    min_size=None,
+    max_size=None,
+    page=1,
+    per_page=20
+):
+    """
+    Search residences with multiple filters.
+    """
+    # Start Query on Residence (which joins Property automatically due to polymorphism)
+    sql_query = Residence.query.filter(Residence.status == "listed")
+
+    # 1. Text Search (Name or Title)
+    if query:
+        search_term = f"%{query}%"
+        sql_query = sql_query.filter(
+            or_(
+                Residence.name.ilike(search_term),
+                Residence.title.ilike(search_term),
+                Residence.description.ilike(search_term) # Optional: Search description too
+            )
+        )
+
+    # 2. Location Filters
+    if state:
+        sql_query = sql_query.filter(Residence.state == state)
+    if city:
+        sql_query = sql_query.filter(Residence.city == city)
+    if district:
+        sql_query = sql_query.filter(Residence.district == district)
+
+    # 3. Price Range
+    if min_price is not None:
+        sql_query = sql_query.filter(Residence.price >= min_price)
+    if max_price is not None:
+        sql_query = sql_query.filter(Residence.price <= max_price)
+
+    # 4. Residence Details
+    if residence_type:
+        sql_query = sql_query.filter(Residence.residence_type == residence_type)
+    if min_bedrooms is not None:
+        sql_query = sql_query.filter(Residence.num_bedrooms >= min_bedrooms)
+    if min_bathrooms is not None:
+        sql_query = sql_query.filter(Residence.num_bathrooms >= min_bathrooms)
+    
+    # 5. Size Range
+    if min_size is not None:
+        sql_query = sql_query.filter(Residence.land_size >= min_size)
+    if max_size is not None:
+        sql_query = sql_query.filter(Residence.land_size <= max_size)
+
+    # Pagination
+    total = sql_query.count()
+    items = sql_query.offset((page - 1) * per_page).limit(per_page).all()
+
+    print(items)
+
+    user_fav_ids = []
+
+    if user_id:
+        user_fav = Favourite.get_favourites_by_user(user_id)
+        user_fav_ids = [fav.property_id for fav in user_fav]
+
+    results = []
+    for prop in items:
+        results.append({
+            "id": prop.id,
+            "name": prop.name,
+            "title": prop.title,
+            "thumbnail_url": prop.thumbnail_url,
+            "state": prop.state,
+            "city": prop.city,
+            "district": prop.district,
+            "price": prop.price,
+            "num_bedrooms": prop.num_bedrooms,
+            "num_bathrooms": prop.num_bathrooms,
+            "land_size": prop.land_size,
+            "residence_type": prop.residence_type,
+            "is_favourited": prop.id in user_fav_ids,
+        })
+
+    return True, {"results": results, "total": total, "page": page}
+
 
 def get_owned_properties(owner_id):
     props = Property.find_by_user_id(owner_id)
@@ -301,6 +397,27 @@ def list_property(property_id, price, deposit):
     db.session.commit()
 
     return True, "Property updated successfully"
+
+def unlist_property(property_id):
+
+    prop = Property.query.get(property_id)
+
+    if not prop:
+        return False, "Property not found"
+
+    if prop.status != "listed":
+        return False, "Property is not currently listed"
+
+    prop.status = "unlisted"
+
+    pending_requests = Request.query.filter_by(property_id=property_id, status="pending").all()
+    for req in pending_requests:
+        req.status = "terminated"
+
+    Favourite.query.filter_by(property_id=property_id).delete()
+
+    db.session.commit()
+    return True, "Property unlisted successfully"
 
 def get_lease(property_id, active_only=True):
     """

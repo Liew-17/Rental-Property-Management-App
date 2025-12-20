@@ -227,6 +227,30 @@ def list_properties_route():
         "message": data
     }), 200
 
+@property_bp.route("/residence/unlist", methods=["POST"])
+def unlist_properties_route():
+    data = request.get_json()
+    property_id = data.get("property_id")
+
+    if property_id is None:
+        return jsonify({
+            "success": False,
+            "message": "property_id is required"
+        }), 400
+
+    success, message = property_service.unlist_property(property_id)
+
+    if not success:
+        return jsonify({
+            "success": False,
+            "message": message
+        }), 400
+
+    return jsonify({
+        "success": True,
+        "message": message
+    }), 200
+
 @property_bp.route("/get_lease/<int:property_id>/<int:active_only>", methods=["GET"])
 def get_lease_route(property_id, active_only):
     """
@@ -265,3 +289,33 @@ def get_tenant_records_route(lease_id):
         "success": True,
         "data": result
     }), 200
+
+
+
+@property_bp.route("/search", methods=["GET"])
+def search_properties_route():
+    def get_arg(key, type_func):
+        val = request.args.get(key)
+        if val in [None, '', 'null']: return None
+        try: return type_func(val)
+        except: return None
+
+    success, data = property_service.search_residences(
+        user_id=request.args.get("user_id"),
+        query=request.args.get("query"),
+        state=request.args.get("state"),
+        city=request.args.get("city"),
+        district=request.args.get("district"),
+        min_price=get_arg("min_price", float),
+        max_price=get_arg("max_price", float),
+        residence_type=request.args.get("residence_type"),
+        min_bedrooms=get_arg("min_bedrooms", int),
+        min_bathrooms=get_arg("min_bathrooms", int),
+        min_size=get_arg("min_size", float),
+        max_size=get_arg("max_size", float),
+        page=get_arg("page", int) or 1
+    )
+
+    if success:
+        return jsonify({"success": True, "data": data}), 200
+    return jsonify({"success": False, "message": "Search failed"}), 400

@@ -5,6 +5,7 @@ import 'package:flutter_application/custom_widgets/residence_card.dart';
 import 'package:flutter_application/models/residence.dart';
 import 'package:flutter_application/pages/edit_property_page.dart';
 import 'package:flutter_application/pages/property_detail_page.dart';
+import 'package:flutter_application/pages/request_list_page.dart';
 import 'package:flutter_application/services/property_service.dart';
 import 'package:flutter_application/theme.dart';
 
@@ -209,7 +210,7 @@ class _ListingManagementPageState extends State<ListingManagementPage> {
               child: isRented
                   ? const SizedBox.shrink() // Hide section for rented state
                   : (isListed
-                      ? _buildListingStatsSection()
+                      ? SizedBox()
                       : MissingRequirementsSection(
                           residence: _residence!,
                           onChanged: (allCompleted) {
@@ -262,14 +263,57 @@ class _ListingManagementPageState extends State<ListingManagementPage> {
         icon: Icons.people_alt_rounded,
         label: 'Requests',
         onTap: () {
-          // TODO: Navigate to request page
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RequestListPage(propertyId: widget.propertyId),
+            ),
+          );
         },
       ),
       ActionButton(
         icon: Icons.unpublished_rounded,
         label: 'Unlist',
-        onTap: () {
-          // TODO: connect to unlist endpoint
+        onTap: () async {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text("Unlist Property?"),
+              content: const Text(
+                  "This will remove your property from search results. "
+                  "All pending rental requests will be terminated."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text("Unlist"),
+                ),
+              ],
+            ),
+          );
+
+          if (confirm != true) return;
+
+          if (!context.mounted) return;
+          final success = await PropertyService.unlistProperty(
+              propertyId: widget.propertyId);
+
+          if (!context.mounted) return;
+
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Property unlisted successfully.")),
+            );
+            _loadProperty(); 
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Failed to unlist property.")),
+            );
+          }
         },
       ),
     ];
@@ -328,62 +372,6 @@ class _ListingManagementPageState extends State<ListingManagementPage> {
     );
   }
 
-
-  Widget _buildListingStatsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Performance",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[800],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildStatRow('Status', 'Active', Colors.green),
-              _buildStatRow('Views', '124', Colors.black87),
-              _buildStatRow('Requests', '8', Colors.black87),
-              _buildStatRow('Favorites', '34', Colors.pink),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatRow(String label, String value, Color valueColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 15)),
-          Text(
-            value,
-            style: TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 15, color: valueColor),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildPricingSheet({
     required void Function(double? price, double? deposit) onConfirm,

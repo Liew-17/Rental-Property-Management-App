@@ -6,6 +6,7 @@ import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/pages/chat_page.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/services/rent_service.dart';
+import 'package:flutter_application/services/socket_service.dart';
 import 'package:flutter_application/theme.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -42,6 +43,13 @@ class _RequestPageState extends State<RequestPage> {
     rentalController = TextEditingController();
     depositController = TextEditingController();
     _loadRequest();
+
+    SocketService.onEvent('refresh_request', (data) {
+      debugPrint("Received refresh event: $data");
+      if (data['request_id'] == request?.id) {
+        _loadRequest(); 
+      }
+    });
   }
 
   @override
@@ -117,15 +125,15 @@ class _RequestPageState extends State<RequestPage> {
     }
   }
 
-  // ==================== UI BUILDERS ====================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Request #${widget.requestId}", style: const TextStyle(color: Colors.white)),
+        title: Text("Request", style: const TextStyle(color: Colors.white)),
         centerTitle: true,
         backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         scrolledUnderElevation: 0,
       ),
       body: loading
@@ -170,8 +178,11 @@ class _RequestPageState extends State<RequestPage> {
                         if (request!.status == 'pending')
                           Center(
                             child: OutlinedButton(
-                              onPressed: () {
-                                // TODO: Terminate Logic
+                              onPressed: () async {
+                               
+                                
+                                await RentService.terminateRentRequest(userId: AppUser().id!, requestId: widget.requestId);
+                                _loadRequest();
                               },
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: Colors.red),

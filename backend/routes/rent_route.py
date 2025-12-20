@@ -4,6 +4,23 @@ from services import rent_service
 
 rent_bp = Blueprint("rent_bp", __name__, url_prefix="/rent")
 
+@rent_bp.route("/check_pending", methods=["POST"])
+def check_pending_request_route():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        property_id = data.get("property_id")
+
+        if not user_id or not property_id:
+            return jsonify({"success": False, "message": "user_id and property_id are required"}), 400
+
+        exists = rent_service.check_existing_pending_request(user_id, property_id)
+
+        return jsonify({"success": True, "exists": exists}), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 @rent_bp.route("/request", methods=["POST"])
 def upload_rent_request():
     try:
@@ -80,9 +97,11 @@ def reject_rent_request_route():
 def terminate_rent_request_route():
     body = request.get_json()
     request_id = body.get("request_id")
+
+
     if request_id is None:
         return jsonify({"success": False, "message": "request_id is required"}), 400
-
+    
     success = rent_service.terminate_rent_request(request_id=request_id)
     if success:
         return jsonify({"success": True, "message": "Rent request terminated"}), 200

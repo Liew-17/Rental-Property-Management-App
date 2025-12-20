@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/pages/main_page.dart';
+import 'package:flutter_application/services/socket_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application/services/api_service.dart';
 import 'dart:convert';
@@ -54,11 +55,16 @@ class _RegisterPageState extends State<RegisterPage> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (!mounted) return;
+        
         AppUser appUser = AppUser();
         appUser.id =  data['id'];
-        appUser.name = data['name'];
+        appUser.name = data['username'];
         appUser.email = data['email'];
+
+        if (appUser.id != null) {
+          SocketService.connect(appUser.id!);
+        }
+        if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainPage()),

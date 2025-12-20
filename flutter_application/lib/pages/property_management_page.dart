@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/action_button.dart';
 import 'package:flutter_application/models/property.dart';
 import 'package:flutter_application/pages/edit_property_page.dart';
+import 'package:flutter_application/pages/furniture_list_page.dart';
 import 'package:flutter_application/pages/issue_list_page.dart';
 import 'package:flutter_application/pages/leases_page.dart';
 import 'package:flutter_application/pages/listing_management_page.dart';
@@ -116,7 +117,18 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
             ).then((_) => _loadProperty());
             
         }},
-        {'icon': Icons.analytics_rounded, 'label': 'Analytics', 'action': () {}},
+        {
+          'icon': Icons.chair, // Used Icons.chair for Furniture
+          'label': 'Furniture',
+          'action': () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => FurnitureListPage(propertyId: widget.propertyId),
+              ),
+            );
+          }
+        },
       ];
     } else {
       return [

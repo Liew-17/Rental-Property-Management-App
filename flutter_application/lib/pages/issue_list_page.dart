@@ -68,6 +68,7 @@ class _IssueListPageState extends State<IssueListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isOwnerMode ? "Reported Issues" : "My Reports"),
+        centerTitle: true,
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
       ),

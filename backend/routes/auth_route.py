@@ -21,6 +21,7 @@ def register():
         "uid": user.uid,
         "id": user.id,
         "username": user.username,
+        "email": user.email,
         "role": user.role
     }), 200
 

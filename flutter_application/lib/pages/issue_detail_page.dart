@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 
 class IssueDetailPage extends StatefulWidget {
   final int issueId;
-  final bool isOwnerMode; // <--- Controlled by parent widget
+  final bool isOwnerMode;
 
   const IssueDetailPage({
     super.key, 
@@ -104,7 +104,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
             child: const Text("Cancel")
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: AppTheme.primaryButton,
             onPressed: () async {
               Navigator.pop(context); 
               
@@ -157,6 +157,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
         title: const Text("Issue Details"),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -259,42 +260,50 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
               const SizedBox(height: 30),
             ],
 
-            // Owner Action Buttons (Strictly controlled by widget.isOwnerMode)
-            if (widget.isOwnerMode && issue.status != 'resolved') ...[
-              const Divider(),
-              const SizedBox(height: 10),
-              const Text("Actions", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              
+     // Owner Action Buttons (Strictly controlled by widget.isOwnerMode)
+        if (widget.isOwnerMode && issue.status != 'resolved') ...[
+          const Divider(),
+          const SizedBox(height: 10),
+          const Text(
+            "Actions",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              // Show "In Progress" button only if status is pending
               if (issue.status == 'pending')
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _updateStatus('in_progress'),
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text("Mark as In Progress"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue, 
-                      foregroundColor: Colors.white
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _updateStatus('in_progress'),
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text("Mark As Progress"),
+                      style: AppTheme.secondaryButton,
+                
                     ),
                   ),
                 ),
-                
-              const SizedBox(height: 10),
               
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _showResolveDialog,
-                  icon: const Icon(Icons.check),
-                  label: const Text("Resolve Issue"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green, 
-                    foregroundColor: Colors.white
+              if (issue.status == 'pending') const SizedBox(width: 12),
+
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: _showResolveDialog,
+                    icon: const Icon(Icons.check),
+                    label: const Text("Resolve"),
+                    style: AppTheme.primaryButton,
                   ),
                 ),
               ),
             ],
+          ),
+        ],
+                
+
           ],
         ),
       ),

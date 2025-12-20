@@ -390,15 +390,13 @@ Widget _buildActiveLeaseCard(Lease lease) {
                       ),
                     ],
                   ),
-                  
-                  // Divider
+
                   Container(
                     height: 32,
                     width: 1,
                     color: Colors.grey.shade300,
                   ),
 
-                  // Right: Status & Month
                   if (_loadingActiveRecord)
                      const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   else
@@ -464,7 +462,7 @@ Widget _buildActiveLeaseCard(Lease lease) {
                   child: ElevatedButton.icon(
                     onPressed: () => _onViewRecords(lease),
                     style: AppTheme.primaryButton,
-                    icon: const Icon(Icons.receipt_long),
+                    icon: const Icon(Icons.history),
                     label: const Text("Records"),
                   ),
                 ),

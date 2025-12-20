@@ -5,6 +5,7 @@ from models.channel import Channel
 from services.file_service import upload_file
 from models.message import Message
 import database as db
+from extension import socketio
 
 def create_image_message(sender_id: int, channel_id: int, image_file=None):
     """
@@ -36,6 +37,17 @@ def create_image_message(sender_id: int, channel_id: int, image_file=None):
             type="image"
         )
 
+        channel = Channel.query.filter_by(id=channel_id).first()
+
+        if channel:
+            owner_id = channel.property.user_id
+            receiver_id = channel.tenant_id if channel.tenant_id != sender_id else owner_id
+            
+            if msg:
+                socketio.emit('refresh_chat', {'channel_id': channel_id}, room=f"user_{receiver_id}")
+
+
+
         return True, "Image message created successfully", msg
 
     except Exception as e:
@@ -56,6 +68,15 @@ def create_text_message(sender_id: int, channel_id: int, message_body: str):
             message_body=message_body,
             type="text"
         )
+
+        channel = Channel.query.filter_by(id=channel_id).first()
+
+        if channel:
+            owner_id = channel.property.user_id
+            receiver_id = channel.tenant_id if channel.tenant_id != sender_id else owner_id
+            print(receiver_id)
+            if msg:
+                socketio.emit('refresh_chat', {'channel_id': channel_id}, room=f"user_{receiver_id}")
 
         return True, "Text message created successfully", msg
 

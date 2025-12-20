@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter_application/custom_widgets/file_uploader.dart';
+import 'package:flutter_application/custom_widgets/image_uploader.dart';
 import 'package:flutter_application/custom_widgets/section.dart'; // Import the section widget
 import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/services/issue_service.dart';
@@ -152,7 +153,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                       style: TextStyle(color: Colors.grey, fontSize: 13),
                     ),
                     const SizedBox(height: 12),
-                    XFileUploadWidget(
+                    ImageUploader(
                       maxFiles: 3,
                       onFilesChanged: (xFiles) {
                         setState(() {

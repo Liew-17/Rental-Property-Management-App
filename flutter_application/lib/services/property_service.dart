@@ -111,6 +111,32 @@ class PropertyService {
     }
   }
 
+  static Future<bool> unlistProperty({required int propertyId}) async {
+    try {
+      final uri = ApiService.buildUri("/property/residence/unlist");
+
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'property_id': propertyId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        debugPrint('Unlisting failed: ${response.statusCode} ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Exception during property unlisting: $e');
+      return false;
+    }
+  }
+
  static Future<bool> deleteGalleryImage({required int propertyId, required String imageUrl}) async {
     try {
       final uri = ApiService.buildUri("/property/gallery/delete");
@@ -302,6 +328,52 @@ class PropertyService {
       throw Exception("Failed to query residences");
     }
 
+  }
+
+  static Future<List<Residence>> searchResidences({
+    String? query,
+    String? state,
+    String? city,
+    String? district,
+    double? minPrice,
+    double? maxPrice,
+    String? residenceType,
+    int? minBedrooms,
+    int? minBathrooms,
+    double? minSize,
+    double? maxSize,
+  }) async {
+
+    Map<String, String> queryParams = {};
+    if(AppUser().id != null){
+        queryParams['user_id'] = AppUser().id.toString();
+    }    
+    if (query != null && query.isNotEmpty) queryParams['query'] = query;
+    if (state != null) queryParams['state'] = state;
+    if (city != null) queryParams['city'] = city;
+    if (district != null) queryParams['district'] = district;
+    if (minPrice != null) queryParams['min_price'] = minPrice.toString();
+    if (maxPrice != null) queryParams['max_price'] = maxPrice.toString();
+    if (residenceType != null) queryParams['residence_type'] = residenceType;
+    if (minBedrooms != null) queryParams['min_bedrooms'] = minBedrooms.toString();
+    if (minBathrooms != null) queryParams['min_bathrooms'] = minBathrooms.toString();
+    if (minSize != null) queryParams['min_size'] = minSize.toString();
+    if (maxSize != null) queryParams['max_size'] = maxSize.toString();
+
+    final uri = ApiService.buildUri("/property/search").replace(queryParameters: queryParams);
+
+    try {
+      final response = await http.get(uri);
+      final jsonData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && jsonData['success'] == true) {
+        List<dynamic> results = jsonData['data']['results'];
+        return results.map((item) => Residence.fromJson(item)).toList();
+      }
+    } catch (e) {
+      debugPrint("Search error: $e");
+    }
+    return [];
   }
 
   static Future<List<Residence>> getOwnedProperties(int ownerId) async {

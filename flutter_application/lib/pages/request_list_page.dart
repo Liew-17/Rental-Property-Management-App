@@ -46,35 +46,69 @@ class _RequestListPageState extends State<RequestListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text(
-          "Rent Requests",
-          style: TextStyle(color: Colors.white),
+    // 1. Separate the requests based on status
+    final pendingRequests = _requests.where((r) => r.status == 'pending').toList();
+    final pastRequests = _requests.where((r) => r.status != 'pending').toList();
+
+    return DefaultTabController(
+      length: 2, // Number of tabs
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text(
+            "Rent Requests",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          backgroundColor: AppTheme.primaryColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          foregroundColor: Colors.white,
+          // 2. Add TabBar
+          bottom: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.white,
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorWeight: 3,
+            tabs: [
+              Tab(text: "Pending"),
+              Tab(text: "History"),
+            ],
+          ),
         ),
-        centerTitle: true,
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        foregroundColor: Colors.white,
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(
+                children: [
+                  // Tab 1: Pending List
+                  _buildRequestList(pendingRequests, "No pending requests."),
+                  
+                  // Tab 2: History List (All other statuses)
+                  _buildRequestList(pastRequests, "No request history."),
+                ],
+              ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _requests.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  itemCount: _requests.length,
-                  itemBuilder: (context, index) {
-                    final req = _requests[index];
-                    return _buildRequestCard(req);
-                  },
-                ),
     );
   }
 
-  Widget _buildEmptyState() {
+  // 3. Reusable helper to build the list or empty state
+  Widget _buildRequestList(List<Request> requests, String emptyMessage) {
+    if (requests.isEmpty) {
+      return _buildEmptyState(emptyMessage);
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      itemCount: requests.length,
+      itemBuilder: (context, index) {
+        final req = requests[index];
+        return _buildRequestCard(req);
+      },
+    );
+  }
+
+  Widget _buildEmptyState(String message) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -82,7 +116,7 @@ class _RequestListPageState extends State<RequestListPage> {
           Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            "No requests yet.",
+            message,
             style: TextStyle(color: Colors.grey[500], fontSize: 16),
           ),
         ],

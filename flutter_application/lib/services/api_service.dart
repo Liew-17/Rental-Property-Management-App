@@ -1,5 +1,7 @@
 class ApiService {
-  static const String _baseUrl = "http://192.168.0.7:5000"; // backend address
+  static const String _baseUrl = "http://192.168.0.19:5000";
+
+  static String getApiAddress() => _baseUrl;
 
   static Uri buildUri(String endpoint) {
     if (!endpoint.startsWith("/")){

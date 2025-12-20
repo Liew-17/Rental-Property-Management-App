@@ -3,6 +3,7 @@ import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
 import 'package:flutter_application/pages/main_page.dart';
 import 'package:flutter_application/pages/register_page.dart';
+import 'package:flutter_application/services/socket_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application/services/api_service.dart';
 import 'dart:convert';
@@ -56,6 +57,10 @@ class LoginPage extends StatelessWidget {
               appUser.email = userData['email'];
               appUser.profilePicUrl = userData['profilePicUrl'];
 
+
+              if (appUser.id != null) {
+                SocketService.connect(appUser.id!);
+              }
           
             onSignedIn();     
           } else {

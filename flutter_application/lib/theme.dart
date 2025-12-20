@@ -32,6 +32,15 @@ class AppTheme {
     textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
   );
 
+  static ButtonStyle secondaryButton = OutlinedButton.styleFrom(
+  foregroundColor: primaryColor, 
+  side: const BorderSide(color: primaryColor, width: 1.5),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(8), 
+  ),
+  textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+  );
+
   static Color getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       // Success / Active

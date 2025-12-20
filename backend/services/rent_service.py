@@ -9,6 +9,20 @@ from models.request import Request, RequestDocument
 from database import db
 from services.file_service import upload_file
 from services.chat_service import initiate_channel
+from extension import socketio
+
+def check_existing_pending_request(user_id, property_id):
+    """
+    Check if a user already has a pending request for a specific property.
+    """
+    existing_request = Request.query.filter_by(
+        tenant_id=user_id,
+        property_id=property_id,
+        status='pending'
+    ).first()
+    
+    return existing_request is not None
+
 
 def rent_property_request(
     property_id,
@@ -36,23 +50,20 @@ def rent_property_request(
         if not files:
             return False, "No files provided for upload."
 
-        # Upload all files and save to DB
         for file in files:
             filename = file.filename
             ext = filename.rsplit(".", 1)[-1].lower()
 
-            # Save file with unique UUID filename
             file_url = upload_file(
                 image=file,
                 folder=f"request/{new_request.id}",
                 filename=f"{uuid.uuid4()}.{ext}"
             )
 
-            # Save document record in DB
             RequestDocument.create(
                 request_id=new_request.id,
                 step_number=step_number,
-                doc_type="Financial Proof",  # TODO: update dynamically if type is known
+                doc_type="Financial Proof",  
                 file_url=file_url,
                 original_filename=filename,
                 file_format=ext,
@@ -74,8 +85,6 @@ def get_request(request_id):
             return False, "Request not found"
 
         prop = request.property
-        # Note: Using prop.user assuming that is the relationship name in Property model (based on property_service.py)
-        # If your model uses 'owner', change to prop.owner
         owner = prop.user if prop else None 
         tenant = request.tenant
 
@@ -97,7 +106,7 @@ def get_request(request_id):
                     "file_url": doc.file_url,
                     "file_format": doc.file_format,
                     "uploaded_by": doc.uploaded_by,
-                } for doc in request.documents
+                } for doc in request.documents if doc.is_active
             ],
             
             # --- Embedded Property Details ---
@@ -223,10 +232,16 @@ def accept_rent_request(request_id):
                     doc.is_active = False
                     doc.updated_at = datetime.now(timezone.utc)
 
+            socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{other.tenant_id}")
+
         prop = request_obj.property
         prop.status = "renting"
 
         db.session.commit()
+
+        socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.tenant_id}")
+        socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.property.user_id}")
+
         return True
 
     except Exception as e:
@@ -255,6 +270,9 @@ def reject_rent_request(request_id):
                 doc.updated_at = datetime.now(timezone.utc)
 
         db.session.commit()
+
+        socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.tenant_id}")
+        socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.property.user_id}")
         return True
 
     except Exception as e:
@@ -268,6 +286,7 @@ def terminate_rent_request(request_id):
     Returns True if successful, False otherwise.
     """
     try:
+
         request_obj = Request.get_request(request_id)
         if not request_obj:
             return False  # Request not found
@@ -287,9 +306,12 @@ def terminate_rent_request(request_id):
         prop.status = "listed"
 
         lease = request_obj.lease
-        lease.status = "terminated"
+        if lease:
+            lease.status = "terminated"
 
         db.session.commit()
+        socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.tenant_id}")
+        socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.property.user_id}")
         return True
 
     except Exception as e:
@@ -376,6 +398,9 @@ def upload_contract(request_id, user_id, contract_file,grace_period_days = None 
         request_obj.updated_at = datetime.now(timezone.utc)
         db.session.commit()
 
+        socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.tenant_id}")
+        socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.property.user_id}")
+
         return True, "Contract uploaded successfully."
 
     except Exception as e:
@@ -416,6 +441,8 @@ def handle_contract_approval(request_id, is_approved, grace_period_days=None):
             request_obj.updated_at = datetime.now(timezone.utc)
 
             db.session.commit()
+            socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.tenant_id}")
+            socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.property.user_id}")
             return True, "Contract approved successfully."
         else:
             # Roll back workflow to contract upload step
@@ -428,6 +455,8 @@ def handle_contract_approval(request_id, is_approved, grace_period_days=None):
                     doc.is_active = False
 
             db.session.commit()
+            socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.tenant_id}")
+            socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.property.user_id}")
             return True, "Contract rejected. Workflow rolled back to step 2."
 
     except Exception as e:
@@ -516,6 +545,9 @@ def pay_first_payment(request_id):
     
 
     db.session.commit()
+
+    socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.tenant_id}")
+    socketio.emit('refresh_request', {"request_id": request_id}, room=f"user_{request_obj.property.user_id}")
 
     return True, "Payment completed and lease activated."    
 

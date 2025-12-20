@@ -144,11 +144,24 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
                     ),
                   ),
                   Positioned(
-                    bottom: 4,
-                    right: 20,
-                    child: IconButton(
-                      icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
-                      onPressed: _pickThumbnail,
+                    bottom: 8,
+                    right: 24,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: .8), // Transparent white background
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: .1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
+                        onPressed: _pickThumbnail,
+                      ),
                     ),
                   ),
                 ],

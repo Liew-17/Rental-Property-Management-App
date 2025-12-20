@@ -4,6 +4,7 @@ import 'package:flutter_application/custom_widgets/clickable_image.dart';
 import 'package:flutter_application/models/channel.dart'; // Ensure this model exists
 import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/services/api_service.dart';
+import 'package:flutter_application/services/socket_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application/models/message.dart';
 import 'package:flutter_application/theme.dart';
@@ -44,6 +45,13 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
     _scrollController.addListener(_scrollListener);
     _initializeChat();
+
+    SocketService.onEvent('refresh_chat', (data) {
+
+      if (data['channel_id'] == _channel?.id) {
+        _loadInitialMessages(); 
+      }
+    });
   }
 
   @override

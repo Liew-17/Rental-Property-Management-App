@@ -355,7 +355,6 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                                     ),
                                   ),
 
-                              // --- Features (Amenities) Tab ---
                               SingleChildScrollView(
                                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                                 child: amenities.isEmpty 
@@ -424,9 +423,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                                     ),
                               ),
                                       
-                                
-
-                              // --- Rules & Terms Tab ---
+                    
                               SingleChildScrollView(
                                 padding: const EdgeInsets.symmetric(horizontal: 20),
                                 child: Column(
@@ -437,9 +434,9 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                                       width: double.infinity,
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.secondaryColor.withOpacity(0.5),
+                                        color: AppTheme.secondaryColor.withValues(alpha: 0.5),
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2))
+                                        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2))
                                       ),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,14 +484,13 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                           ),
                         ),
                         
-                        const SizedBox(height: 100), // Space for bottom bar
+                        const SizedBox(height: 100), 
                       ],
                     ),
                   ),
                 ],
               ),
 
-              // --- Bottom Bar ---
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -533,7 +529,25 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                       ),
                       if (!_resolvedViewOnly)
                         ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
+                 
+                            final hasPending = await RentService.checkPendingRequest(
+                              userId: AppUser().id!,
+                              propertyId: widget.propertyId,
+                            );
+
+                            if (!context.mounted) return;
+
+                            if (hasPending) {
+               
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("You have already sent a request for this property."),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            } else {
+
                               showDialog(
                                 context: context,
                                 builder: (context) {
@@ -551,6 +565,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                                   );
                                 },
                               );
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,

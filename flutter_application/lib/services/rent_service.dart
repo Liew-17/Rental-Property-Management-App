@@ -6,6 +6,33 @@ import 'package:flutter_application/services/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class RentService{
+
+  static Future<bool> checkPendingRequest({
+    required int userId,
+    required int propertyId,
+  }) async {
+    try {
+      final uri = ApiService.buildUri("/rent/check_pending");
+      
+      final response = await http.post(
+        uri,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'user_id': userId,
+          'property_id': propertyId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['exists'] == true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint("Exception checking pending request: $e");
+      return false;
+    }
+  }
   static Future<Request?> getRentRequest(int requestId) async {
     try {
       final uri = ApiService.buildUri("/rent/request/$requestId");
@@ -83,7 +110,7 @@ class RentService{
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint("Rent request uploaded successfully: $responseBody");
+       
         return true;
       } else {
         debugPrint("Upload failed: ${response.statusCode} -> $responseBody");
@@ -108,7 +135,7 @@ class RentService{
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint("Rent request accepted successfully: ${response.body}");
+        
         return true;
       } else {
         debugPrint("Accept failed: ${response.statusCode} -> ${response.body}");
@@ -134,7 +161,7 @@ class RentService{
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint("Rent request rejected successfully: ${response.body}");
+       
         return true;
       } else {
         debugPrint("Reject failed: ${response.statusCode} -> ${response.body}");
@@ -155,14 +182,16 @@ class RentService{
 
       final response = await http.post(
         uri,
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           'user_id': userId,
           'request_id': requestId,
         }),
       );
 
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint("Rent request terminated successfully: ${response.body}");
+       
         return true;
       } else {
         debugPrint("Terminate failed: ${response.statusCode} -> ${response.body}");
@@ -213,7 +242,7 @@ class RentService{
       var body = await response.stream.bytesToString();
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint("Contract uploaded successfully: $body");
+       
         return true;
       } else {
         debugPrint("Contract upload failed: ${response.statusCode} -> $body");
@@ -250,8 +279,7 @@ class RentService{
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint(
-          "Contract ${isApproved ? 'approved' : 'rejected'} successfully: ${response.body}");
+       
         return true;
       } else {
         debugPrint(
@@ -310,7 +338,7 @@ class RentService{
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint("First payment successful: ${response.body}");
+       
         return true;
       } else {
         debugPrint("First payment failed: ${response.statusCode} -> ${response.body}");
@@ -339,7 +367,7 @@ class RentService{
       );
 
       if (response.statusCode == 200) {
-        debugPrint("Rent paid successfully: ${response.body}");
+        
         return true;
       } else {
         debugPrint("Rent payment failed: ${response.statusCode} -> ${response.body}");

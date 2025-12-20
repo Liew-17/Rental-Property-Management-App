@@ -41,6 +41,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
   final _bedroomCtrl = TextEditingController();
   final _bathroomCtrl = TextEditingController();
   final _landCtrl = TextEditingController();
+  final _rulesCtrl = TextEditingController();
   final picker = ImagePicker();
   
   XFile? _thumbnail;
@@ -80,6 +81,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
         _bedroomCtrl.text = res.numBedrooms?.toString() ?? "0";
         _bathroomCtrl.text = res.numBathrooms?.toString() ?? "0";
         _landCtrl.text = res.landSize?.toString() ?? "0";
+        _rulesCtrl.text = res.rules ?? "";
 
         _thumbnailUrl = res.thumbnailUrl;
         _state = res.state;
@@ -119,6 +121,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
       "district": _district,
       "address": _addressCtrl.text,
       "features": _features,
+      "rules": _rulesCtrl.text,
       "num_bedrooms": int.tryParse(_bedroomCtrl.text) ?? 0,
       "num_bathrooms": int.tryParse(_bathroomCtrl.text) ?? 0,
       "land_size": double.tryParse(_landCtrl.text) ?? 0.0,
@@ -239,13 +242,26 @@ class _EditPropertyPageState extends State<EditPropertyPage>
                 ),
 
                 Positioned(
-                  bottom: 4,
-                  right: 20,
-                  child: IconButton(
-                    icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
-                    onPressed: _pickThumbnail,
+                    bottom: 8,
+                    right: 24,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: .8), // Transparent white background
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: .1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
+                        onPressed: _pickThumbnail,
+                      ),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -388,6 +404,21 @@ class _EditPropertyPageState extends State<EditPropertyPage>
                         _features = combined;
                       });
                     },
+                  ),
+                ),
+
+                section(
+                  "House Rules",
+                  TextField(
+                    controller: _rulesCtrl,
+                    decoration: const InputDecoration(
+                      labelText: "Rules & Terms",
+                      hintText: "E.g. No smoking inside, No pets allowed...",
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 5,
                   ),
                 ),
               ],

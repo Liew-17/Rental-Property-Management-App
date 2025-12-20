@@ -17,10 +17,10 @@ class LocationPicker extends StatefulWidget {
   });
 
   @override
-  State<LocationPicker> createState() => _LocationPickerState();
+  State<LocationPicker> createState() => LocationPickerState();
 }
 
-class _LocationPickerState extends State<LocationPicker> {
+class LocationPickerState extends State<LocationPicker> {
   String? _state;
   String? _district;
   String? _city;
@@ -34,6 +34,17 @@ class _LocationPickerState extends State<LocationPicker> {
     _validateAndInitialize();
   }
 
+  void reset() {
+    setState(() {
+      _state = null;
+      _district = null;
+      _city = null;
+      _districts = [];
+      _cities = [];
+    });
+    // Notify parent that values are cleared
+    widget.onChanged(null, null, null);
+  }
 
   void _validateAndInitialize() {
     // Initialize state

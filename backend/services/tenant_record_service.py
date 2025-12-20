@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 from models.property import Property
+from models.request import Request
 from models.tenant_record import TenantRecord
 from models.lease import Lease
 from database import db
@@ -99,6 +100,14 @@ def process_daily_tasks():
                     # Set Property back to Unlisted
                     if lease.property:
                         lease.property.status = 'unlisted'
+
+                    requests_to_archive = Request.query.filter(
+                        Request.property_id == lease.property_id,
+                        Request.status.in_(['pending', 'rejected', 'terminated','completed'])
+                    ).all()
+
+                    for req in requests_to_archive:
+                        req.status = 'archived'
                         
                     print(f"Lease {lease.id} completed and property {lease.property_id} unlisted.")
 
