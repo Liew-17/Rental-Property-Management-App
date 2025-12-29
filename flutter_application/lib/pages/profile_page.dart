@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; 
 import 'package:flutter_application/models/user.dart';
+import 'package:flutter_application/pages/login_page.dart'; 
 import 'package:flutter_application/pages/my_request_page.dart'; 
 import 'package:flutter_application/pages/my_favourite_page.dart'; 
-import 'package:flutter_application/services/api_service.dart'; // Import ApiService
-import 'package:flutter_application/services/user_service.dart'; // Import UserService
+import 'package:flutter_application/services/api_service.dart'; 
+import 'package:flutter_application/services/socket_service.dart'; 
+import 'package:flutter_application/services/user_service.dart'; 
 import 'package:flutter_application/theme.dart';
-import 'package:image_picker/image_picker.dart'; // Import ImagePicker
+import 'package:image_picker/image_picker.dart'; 
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback? onRoleChanged;
@@ -50,95 +53,82 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _toggleRole(Set<String> newSelection) {
-    setState(() {
-      AppUser().role = newSelection.first;
-    });
-
-    widget.onRoleChanged?.call(); 
+  Future<void> _toggleRole(Set<String> newSelection) async {
+    final newRole = newSelection.first;
     
+    // Call API to update role
+    final success = await UserService.updateRole(newRole);
 
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Switched to ${AppUser().role} mode"),
-        duration: const Duration(seconds: 1),
-        backgroundColor: AppTheme.primaryColor,
-      )
-    );
+    if (success) {
+      setState(() {
+        AppUser().role = newRole;
+      });
+
+      widget.onRoleChanged?.call(); 
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Switched to ${AppUser().role} mode"),
+            duration: const Duration(seconds: 1),
+            backgroundColor: AppTheme.primaryColor,
+          )
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to update role")),
+        );
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+
+      try {
+        SocketService.socket.disconnect();
+      } catch (e) {
+        debugPrint("Socket disconnect error (might not be connected): $e");
+      }
+
+      AppUser().reset();
+
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      debugPrint("Error logging out: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error logging out: $e")),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final user = AppUser();
     final isOwner = user.role == 'owner';
-    final safePadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: Stack(
-        children: [
-          // Main Scrollable Content
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 60), // Increased top spacing for header
-                _buildProfileHeader(user),
-                const SizedBox(height: 30),
-                
-                // Menu Items
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      // Only show My Requests if NOT owner (Tenant Mode)
-                      if (!isOwner) ...[
-                        _buildMenuItem(
-                          context,
-                          icon: Icons.list_alt_rounded,
-                          title: 'My Requests',
-                          subtitle: 'View status of your rental applications',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const MyRequestPage()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 15),
-                      ],
-                      
-                      _buildMenuItem(
-                        context,
-                        icon: Icons.favorite_rounded,
-                        title: 'My Favorites',
-                        subtitle: 'Properties you have saved',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const MyFavouritePage()),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 60), 
+            _buildProfileHeader(user),
+            const SizedBox(height: 20),
 
-          // Floating Role Switcher (Top Right)
-          Positioned(
-            top: safePadding + 16,
-            right: 20,
-            child: Material(
-              color: Colors.white,
-              elevation: 4,
-              shadowColor: Colors.black.withOpacity(0.2), 
-              borderRadius: BorderRadius.circular(30),
-              child:SegmentedButton<String>(
+            // Role Switcher
+            SegmentedButton<String>(
               segments: const [
                 ButtonSegment(
                   value: 'tenant',
@@ -158,7 +148,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 backgroundColor: WidgetStateProperty.resolveWith<Color>(
                   (Set<WidgetState> states) {
                     if (states.contains(WidgetState.selected)) {
-                      return AppTheme.primaryColor.withOpacity(0.2);
+                      return AppTheme.primaryColor.withValues(alpha: 0.2);
                     }
                     return Colors.white;
                   },
@@ -173,9 +163,60 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
+            
+            const SizedBox(height: 30),
+            
+            // Menu Items
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  
+                  if (!isOwner) ...[
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.list_alt_rounded,
+                      title: 'My Requests',
+                      subtitle: 'View status of your rental applications',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MyRequestPage()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                  ],
+                  
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.favorite_rounded,
+                    title: 'My Favorites',
+                    subtitle: 'Properties you have saved',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MyFavouritePage()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Logout Button
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.logout_rounded,
+                    title: 'Logout',
+                    subtitle: 'Sign out of your account',
+                    onTap: _logout,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
@@ -184,7 +225,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Column(
       children: [
-        // Profile Image Section
         Stack(
           children: [
             Container(
@@ -245,8 +285,8 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 15),
         
         Text(
-          user.name??"h",
-          style: AppTheme.heading1.copyWith(fontSize: 24, color: Colors.black87),
+          user.name??"username",
+          style: TextStyle(fontSize: 24, color: Colors.black87),
         ),
         const SizedBox(height: 5),
 
@@ -264,7 +304,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -297,7 +337,7 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
+            color: Colors.grey.withValues(alpha:  (0.05)),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -313,7 +353,7 @@ class _ProfilePageState extends State<ProfilePage> {
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: AppTheme.primaryColor),

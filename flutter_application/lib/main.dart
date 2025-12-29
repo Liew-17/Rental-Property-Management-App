@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_application/pages/login_page.dart';
-import 'package:flutter_application/pages/search_page.dart'; 
+import 'package:flutter_application/pages/search_page.dart';
+import 'package:flutter_application/services/api_service.dart'; 
 import 'firebase_options.dart'; 
 import 'pages/profile_page.dart';
 import 'pages/register_page.dart';
@@ -14,6 +15,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await ApiService.loadUrl();
   runApp(const MyApp());
 }
 

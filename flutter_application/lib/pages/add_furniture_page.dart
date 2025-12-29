@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application/custom_widgets/image_picker_btn.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application/custom_widgets/section.dart';
 import 'package:flutter_application/services/furniture_service.dart';
@@ -27,19 +28,7 @@ class _AddFurniturePageState extends State<AddFurniturePage> {
   final List<String> _statusOptions = ["Good", "Damaged", "Repaired", "Disposed"];
   
   XFile? _image;
-  final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
-
-  Future<void> _pickImage() async {
-    try {
-      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        setState(() => _image = pickedFile);
-      }
-    } catch (e) {
-      debugPrint("Image pick error: $e");
-    }
-  }
 
   Future<void> _submit() async {
     if (_nameController.text.trim().isEmpty) {
@@ -94,7 +83,7 @@ class _AddFurniturePageState extends State<AddFurniturePage> {
       appBar: AppBar(
         title: const Text(
           "Add Furniture",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
         backgroundColor: AppTheme.primaryColor,
@@ -136,7 +125,7 @@ class _AddFurniturePageState extends State<AddFurniturePage> {
                     right: 24,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .8), // Transparent white background
+                        color: Colors.white.withValues(alpha: .8),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -146,9 +135,11 @@ class _AddFurniturePageState extends State<AddFurniturePage> {
                           ),
                         ],
                       ),
-                      child: IconButton(
+                      child: ImagePickerButton(
                         icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
-                        onPressed: _pickImage,
+                        onImageSelected: (XFile file) {
+                          setState(() => _image = file);
+                        },
                       ),
                     ),
                   ),

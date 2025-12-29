@@ -60,7 +60,6 @@ class _FurnitureListPageState extends State<FurnitureListPage> with SingleTicker
     }
   }
 
-  // Helper for Status Colors (Local override since AppTheme might not have these specific keys)
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Good': return Colors.green;

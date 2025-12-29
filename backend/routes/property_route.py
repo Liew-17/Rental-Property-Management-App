@@ -227,6 +227,15 @@ def list_properties_route():
         "message": data
     }), 200
 
+@property_bp.route("/archive/<int:property_id>", methods=["PUT"])
+def archive_property_route(property_id):
+    success, message = property_service.archive_property(property_id)
+
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "message": message}), 400
+
 @property_bp.route("/residence/unlist", methods=["POST"])
 def unlist_properties_route():
     data = request.get_json()

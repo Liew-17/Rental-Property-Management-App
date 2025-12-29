@@ -12,6 +12,7 @@ from services.file_service import upload_file
 import uuid
 from typing import Optional
 from sqlalchemy import or_, and_
+from extension import socketio
 
 def add_residence_property(      
     uid,
@@ -398,6 +399,24 @@ def list_property(property_id, price, deposit):
 
     return True, "Property updated successfully"
 
+def archive_property(property_id):
+
+    property = Property.find_by_id(property_id)
+
+    if not property:
+        return False, "Property not found"
+
+    if property.status != 'unlisted':
+        return False, "Only unlisted properties can be archived. Please unlist it first."
+    
+    try:
+        property.status = 'archived'
+        db.session.commit()
+        return True, "Property archived successfully"
+    except Exception as e:
+        db.session.rollback()
+        return False, str(e)
+
 def unlist_property(property_id):
 
     prop = Property.query.get(property_id)
@@ -413,8 +432,10 @@ def unlist_property(property_id):
     pending_requests = Request.query.filter_by(property_id=property_id, status="pending").all()
     for req in pending_requests:
         req.status = "terminated"
+        socketio.emit('refresh_request', {"request_id": req.id}, room=f"user_{req.tenant_id}")
 
     Favourite.query.filter_by(property_id=property_id).delete()
+
 
     db.session.commit()
     return True, "Property unlisted successfully"

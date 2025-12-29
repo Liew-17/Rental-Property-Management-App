@@ -371,11 +371,11 @@ class _PropertyDetailPageState extends State<PropertyDetailPage>
                                       ),
                                     )
                                   : Wrap(
-                                      spacing: 12, // Horizontal gap
-                                      runSpacing: 12, // Vertical gap
+                                      spacing: 12, 
+                                      runSpacing: 12, 
                                       children: amenities.map((feature) {
                                         final icon = FeaturesData.getFeatureIcon(feature);
-                                        // Calculate width for 3 columns (Screen width - padding - spacing) / 3
+                        
                                         final itemWidth = (MediaQuery.of(context).size.width - 40 - 24) / 3;
 
                                         return Container(
@@ -656,11 +656,11 @@ class _RentRequestDialogState extends State<RentRequestDialog> {
             const SizedBox(height: 16),
 
             // Duration
-            const Text("Duration (Months)", style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
             Row(
               children: [
-                IconButton.filledTonal(
+                const Text("Duration (Months)", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(width: 16),
+                IconButton(
                   icon: const Icon(Icons.remove),
                   onPressed: () {
                     if (_duration > 1) setState(() => _duration--);
@@ -669,10 +669,10 @@ class _RentRequestDialogState extends State<RentRequestDialog> {
                 const SizedBox(width: 16),
                 Text(
                   "$_duration",
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(width: 16),
-                IconButton.filledTonal(
+                IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: () => setState(() => _duration++),
                 ),

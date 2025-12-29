@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/action_button.dart';
 import 'package:flutter_application/models/property.dart';
+import 'package:flutter_application/models/user.dart';
+import 'package:flutter_application/pages/chat_page.dart';
 import 'package:flutter_application/pages/edit_property_page.dart';
 import 'package:flutter_application/pages/furniture_list_page.dart';
 import 'package:flutter_application/pages/issue_list_page.dart';
 import 'package:flutter_application/pages/leases_page.dart';
 import 'package:flutter_application/pages/listing_management_page.dart';
 import 'package:flutter_application/pages/pay_rent_page.dart';
+import 'package:flutter_application/pages/property_detail_page.dart';
 import 'package:flutter_application/pages/report_issue_page.dart';
 import 'package:flutter_application/pages/request_list_page.dart';
 import 'package:flutter_application/services/api_service.dart';
@@ -82,7 +85,7 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
               MaterialPageRoute(
                 builder: (_) => RequestListPage(propertyId: widget.propertyId),
               ),
-            );
+            ).then((_) => _loadProperty());;
           }
         },
         {
@@ -132,7 +135,14 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
       ];
     } else {
       return [
-        {'icon': Icons.description_rounded, 'label': 'Contract', 'action': () {}},
+        {'icon': Icons.info_outline_rounded, 'label': 'Property Info', 'action': () {
+             Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PropertyDetailPage(propertyId: widget.propertyId, viewOnly: true),
+              ),
+            );
+        }},
         {'icon': Icons.payment_rounded, 'label': 'Pay Rent', 'action': () {
             Navigator.push(
               context,
@@ -142,17 +152,16 @@ class _PropertyManagementPageState extends State<PropertyManagementPage> {
             ).then((_) => _loadProperty());
           }
         },
-        {'icon': Icons.chat_bubble_rounded, 'label': 'Chat Owner', 'action': () {}},
-        {'icon': Icons.report_rounded, 'label': 'Report Issue', 'action': () {
-            Navigator.push(
+        {'icon': Icons.chat_bubble_rounded, 'label': 'Chat Owner', 'action': () {
+             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ReportIssuePage(propertyId: widget.propertyId),
+                builder: (_) => ChatPage(propertyId: widget.propertyId, tenantId: AppUser().id??0, channelType: 'lease',),
               ),
             ).then((_) => _loadProperty());
 
         }},
-        {'icon': Icons.report_rounded, 'label': 'My Issue', 'action': () {
+        {'icon': Icons.report_rounded, 'label': 'Report Issue', 'action': () {
             Navigator.push(
               context,
               MaterialPageRoute(

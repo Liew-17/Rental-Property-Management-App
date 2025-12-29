@@ -147,6 +147,32 @@ static Future<bool?> toggleFavourite(int propertyId) async {
     }
   }
 
+  static Future<bool> updateRole(String role) async {
+    try {
+      final uri = ApiService.buildUri("/user/update_role");
+      final response = await http.put(
+        uri,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_id": AppUser().id,
+          "role": role,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        AppUser().role = role;
+        return true;
+      } else {
+        debugPrint("Update role failed: ${data['message']}");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("Exception updating role: $e");
+      return false;
+    }
+  }
+
   static Future<bool> uploadProfilePic(XFile imageFile) async {
     try {
       final uri = ApiService.buildUri("/user/upload_profile_pic");

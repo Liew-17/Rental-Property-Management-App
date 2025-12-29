@@ -8,7 +8,7 @@ def register():
     data = request.get_json()
     uid = data.get("uid")
     username = data.get("username")
-    role = data.get("role", "user")
+    role = data.get("role", "tenant")
     email = data.get("email")
 
 

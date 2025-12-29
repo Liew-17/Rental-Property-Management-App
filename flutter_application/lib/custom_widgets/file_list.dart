@@ -6,8 +6,8 @@ import 'package:flutter_application/models/request.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:web/web.dart' as html;
-// Import the new page
+import 'package:url_launcher/url_launcher.dart';
+
 
 class FileList extends StatefulWidget {
   final List<RequestDocument> files;
@@ -32,15 +32,15 @@ class _FileListState extends State<FileList> {
     final fileName = file.originalFilename;
     final fileUrl = ApiService.buildFileUrl(file.fileUrl, download: true);
 
-    if (kIsWeb) {
-      final anchor = html.HTMLAnchorElement()
-        ..href = fileUrl
-        ..setAttribute("download", fileName)
-        ..click();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$fileName download started')),
-      );
+      if (kIsWeb) {
+      final uri = Uri.parse(fileUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Download started for $fileName')),
+        );
+      }
     } else {
       try {
         Directory? downloadsDir;

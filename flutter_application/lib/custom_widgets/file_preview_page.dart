@@ -7,8 +7,9 @@ import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 // For web download support
-import 'package:web/web.dart' as html;
+
 
 class FilePreviewPage extends StatefulWidget {
   final String fileUrl;
@@ -47,10 +48,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
     try {
       if (kIsWeb) {
-        final anchor = html.HTMLAnchorElement()
-          ..href = url
-          ..setAttribute("download", widget.fileName)
-          ..click();
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          
+
+        }
       } else {
         Directory? downloadsDir;
         if (Platform.isAndroid) {

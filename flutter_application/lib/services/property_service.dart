@@ -330,6 +330,21 @@ class PropertyService {
 
   }
 
+  static Future<bool> archiveProperty(int propertyId) async {
+  try {
+    final uri = ApiService.buildUri("/property/archive/$propertyId");
+    final response = await http.put(uri);
+
+    if (response.statusCode == 200) {
+      return true;
+    }
+    return false;
+  } catch (e) {
+    debugPrint("Error archiving property: $e");
+    return false;
+  }
+}
+
   static Future<List<Residence>> searchResidences({
     String? query,
     String? state,

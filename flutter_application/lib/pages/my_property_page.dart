@@ -86,6 +86,58 @@ class _MyPropertyPageState extends State<MyPropertyPage>
     }
   }
 
+  Future<void> _handleArchive(Property property) async {
+
+    if (property.status != 'unlisted') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Only 'unlisted' properties can be archived."),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Archive Property"),
+        content: Text(
+            "Are you sure you want to archive '${property.name}'?\n\nIt will be hidden from your list but kept in records."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Archive", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _isLoading = true);
+      
+      final success = await PropertyService.archiveProperty(property.id);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Property archived successfully")),
+          );
+          _loadProperties(); // Refresh list
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to archive property")),
+          );
+        }
+      }
+    }
+  }
+
   Widget _buildEmptyState(String message, IconData icon) {
     return Center(
       child: Column(
@@ -128,7 +180,7 @@ class _MyPropertyPageState extends State<MyPropertyPage>
                 ).then((_) => _loadProperties());
               },
               onDelete: () {
-                 // Delete logic placeholder
+                 _handleArchive(p);
               },
             );
           } else {

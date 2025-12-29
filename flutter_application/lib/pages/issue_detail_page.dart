@@ -153,6 +153,7 @@ class _IssueDetailPageState extends State<IssueDetailPage> {
     final issue = _issue!;
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text("Issue Details"),
         backgroundColor: AppTheme.primaryColor,

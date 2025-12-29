@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application/custom_widgets/image_picker_btn.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application/custom_widgets/section.dart';
 import 'package:flutter_application/models/furniture.dart';
@@ -29,7 +30,6 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
   final List<String> _statusOptions = ["Good", "Damaged", "Repaired", "Disposed"];
   
   XFile? _newImage;
-  final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
 
   @override
@@ -55,17 +55,6 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
     super.dispose();
   }
 
-
-  Future<void> _pickImage() async {
-    try {
-      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        setState(() => _newImage = pickedFile);
-      }
-    } catch (e) {
-      debugPrint("Image pick error: $e");
-    }
-  }
 
   Future<void> _deleteFurniture() async {
     final confirm = await showDialog<bool>(
@@ -223,7 +212,8 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
                     right: 24,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .8), // Transparent white background
+                        // ... keep your existing decoration ...
+                        color: Colors.white.withValues(alpha: .8),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -233,9 +223,12 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
                           ),
                         ],
                       ),
-                      child: IconButton(
+                      // REPLACE the old IconButton with this:
+                      child: ImagePickerButton(
                         icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
-                        onPressed: _pickImage,
+                        onImageSelected: (XFile file) {
+                          setState(() => _newImage = file);
+                        },
                       ),
                     ),
                   ),
@@ -270,7 +263,7 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _selectedStatus,
+                    initialValue: _selectedStatus,
                     decoration: const InputDecoration(
                       labelText: "Status",
                       prefixIcon: Icon(Icons.info_outline, color: AppTheme.primaryColor),

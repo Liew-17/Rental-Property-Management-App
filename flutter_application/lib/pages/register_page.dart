@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application/models/user.dart';
 import 'package:flutter_application/pages/main_page.dart';
 import 'package:flutter_application/services/socket_service.dart';
+import 'package:flutter_application/theme.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application/services/api_service.dart';
 import 'dart:convert';
@@ -60,6 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
         appUser.id =  data['id'];
         appUser.name = data['username'];
         appUser.email = data['email'];
+        appUser.role = 'tenant';
 
         if (appUser.id != null) {
           SocketService.connect(appUser.id!);
@@ -98,7 +100,12 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Register")),
+      appBar: AppBar(title: const Text("Register"),
+      foregroundColor: Colors.white,
+      backgroundColor: AppTheme.primaryColor,
+      centerTitle: true,
+      ),
+      backgroundColor: Colors.grey[50],
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

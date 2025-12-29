@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application/custom_widgets/clickable_image.dart';
+import 'package:flutter_application/custom_widgets/image_picker_btn.dart';
 import 'package:flutter_application/models/channel.dart'; // Ensure this model exists
 import 'package:flutter_application/models/user.dart';
+import 'package:flutter_application/pages/property_detail_page.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:flutter_application/services/socket_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -47,6 +49,8 @@ class _ChatPageState extends State<ChatPage> {
     _initializeChat();
 
     SocketService.onEvent('refresh_chat', (data) {
+      
+      if (!mounted) return;
 
       if (data['channel_id'] == _channel?.id) {
         _loadInitialMessages(); 
@@ -195,17 +199,10 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<void> _sendImageMessage() async {
+  Future<void> _sendImageMessage(XFile pickedFile) async {
     if (_channel == null) return;
-    final picker = ImagePicker();
-
+    
     try {
-      final pickedFile = await picker.pickImage(
-        source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
-      );
-
-      if (pickedFile == null) return;
-
       final msg = await ChatService.sendImageMessage(
         senderId: _currentUserId,
         channelId: _channel!.id,
@@ -235,10 +232,9 @@ class _ChatPageState extends State<ChatPage> {
     // Display the "Opposite" person
     final String displayName = isMeOwner ? _channel!.tenantName : _channel!.ownerName;
     final String? displayProfile = isMeOwner ? _channel!.tenantProfile : _channel!.ownerProfile;
-    final String roleLabel = isMeOwner ? "Tenant" : "Landlord";
+    final String roleLabel = isMeOwner ? "Tenant" : "Owner";
     final Color roleColor = isMeOwner ? Colors.blue : Colors.orange;
-    
-    // Property Title
+
     final String propTitle = _channel!.displayTitle; 
 
     return AppBar(
@@ -304,8 +300,35 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
           ),
+
+          
+
+
         ],
       ),
+      actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.black), // Three-dot icon
+            onSelected: (value) {
+              if (value == 'view_info') {
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PropertyDetailPage(propertyId: widget.propertyId, viewOnly: true),
+                  ),
+                ).then((_) => _loadInitialMessages());
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<String>(
+                  value: 'view_info',
+                  child: Text('View property info'),
+                ),
+              ];
+            },
+          ),
+        ],
     );
   }
 
@@ -440,9 +463,9 @@ class _ChatPageState extends State<ChatPage> {
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: _sendImageMessage,
+                  ImagePickerButton(
                     icon: const Icon(Icons.add_photo_alternate_rounded, color: AppTheme.primaryColor),
+                    onImageSelected: (XFile file) => _sendImageMessage(file),
                   ),
                   Expanded(
                     child: Container(

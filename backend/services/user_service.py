@@ -60,6 +60,20 @@ def update_user_location(id, state, city, district):
         db.session.rollback()
         return False, user
     
+def update_user_role(user_id, new_role):
+
+    user = User.find_by_id(user_id)
+    if not user:
+        return False, "User not found"
+    
+    user.role = new_role
+    try:
+        db.session.commit()
+        return True, "Role updated successfully"
+    except Exception as e:
+        db.session.rollback()
+        return False, str(e)
+    
 def get_user_rent_requests(user_id):
     """
     Get all rent requests made by a specific user (tenant).
@@ -144,8 +158,9 @@ def get_user_favourites(user_id):
     for fav in favourites:
         prop_id = fav.property_id # Access the related Property object
         prop = Property.find_by_id(prop_id)
-        # We only return the property if it still exists
-        if not prop:
+
+        # only return listed properties
+        if not prop or prop.status != 'listed':
             continue
 
         # Basic fields common to all properties

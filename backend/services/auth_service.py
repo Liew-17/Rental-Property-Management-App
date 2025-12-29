@@ -1,6 +1,6 @@
 from models.user import User
 
-def register(uid, username, email, role="user", ):
+def register(uid, username, email, role="tenant", ):
     user = User.find_by_uid(uid)
 
     if not user:

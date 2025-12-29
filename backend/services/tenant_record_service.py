@@ -8,36 +8,36 @@ from database import db
 
 def generate_next_tenant_record(lease_id, force_generate=False):
     """
-    Check the lease's latest tenant record and generate the next one if start date has been reached.
+    Generate the next tenant billing record based on the lease's base start date.
+    Billing cycles are always calculated as:
+        lease.start_date + N months
+    to avoid month drift (e.g. Jan 31 → Feb 28 → Mar 31).
     """
+
     lease = Lease.find_by_id(lease_id)
-    
     if not lease:
-        
         return None
 
-    latest_record = TenantRecord.query.filter_by(lease_id=lease.id)\
-                                      .order_by(TenantRecord.start_date.desc())\
-                                      .first()
+    record_count = TenantRecord.query.filter_by(lease_id=lease.id).count()
 
-    # Determine next month's start_date
-    if latest_record:
-        next_start_date = latest_record.start_date + relativedelta(months=1)
-        next_month_str = (datetime.strptime(latest_record.month + "-01", "%Y-%m-%d") + relativedelta(months=1)).strftime("%Y-%m")
-    else:
-        next_start_date = lease.start_date
-        next_month_str = lease.start_date.strftime("%Y-%m")
+    # Generate next start date based on initial lease start date
+    next_start_date = lease.start_date + relativedelta(months=record_count)
+    next_month_str = next_start_date.strftime("%Y-%m")
 
-    if lease.end_date and next_start_date > lease.end_date and not force_generate:
+    # Stop if beyond lease end date (unless forced)
+    if lease.end_date and next_start_date >= lease.end_date and not force_generate:
         return None
 
-    # Determine due date (start_date + grace period)
+    # Due date = start_date + grace period
     due_date = next_start_date + timedelta(days=lease.gracePeriodDays)
+
     today = datetime.now(timezone.utc).date()
+
   
-    # Generate next record if pass the start date / force generate is true
-    if next_start_date <= today or force_generate == True:
-        new_record = TenantRecord.create(
+
+    # Generate only if cycle has started or forced
+    if next_start_date <= today or force_generate:
+        return TenantRecord.create(
             lease_id=lease.id,
             month=next_month_str,
             start_date=next_start_date,
@@ -45,9 +45,8 @@ def generate_next_tenant_record(lease_id, force_generate=False):
             amount_paid=0.0,
             status="unpaid"
         )
-        return new_record
-    else:
-        return None  
+
+    return None
 
 def process_daily_tasks():
     """
@@ -61,16 +60,13 @@ def process_daily_tasks():
         today = datetime.now(timezone.utc).date()
 
         for lease in active_leases:
-            # --- TASK 1: Generate ALL missing records (Catch-up) ---
-            # We loop until generate_next_tenant_record returns None 
-            # (either because it's caught up to today, or hit end_date)
+
             while True:
                 created = generate_next_tenant_record(lease.id)
                 if not created:
                     break
             
-            # --- TASK 2: Update Overdue Status ---
-            # Check all unpaid records for this lease
+
             unpaid_records = TenantRecord.query.filter(
                 TenantRecord.lease_id == lease.id,
                 TenantRecord.status == 'unpaid'
@@ -79,10 +75,9 @@ def process_daily_tasks():
             for record in unpaid_records:
                 if today > record.due_date:
                     record.status = 'overdue'
-                    # Optional: Add logic to notify tenant here
+                 
 
-            # --- TASK 3: Check Lease Completion ---
-            # If today reached or passed the lease end date
+
             if lease.end_date and today >= lease.end_date:
                 # Check if there are ANY unpaid or overdue records
                 outstanding_balance = TenantRecord.query.filter(
@@ -90,7 +85,6 @@ def process_daily_tasks():
                     TenantRecord.status.in_(['unpaid', 'overdue'])
                 ).count()
 
-                # If all records are paid (outstanding == 0)
                 if outstanding_balance == 0:
                     lease.status = 'completed'
                     

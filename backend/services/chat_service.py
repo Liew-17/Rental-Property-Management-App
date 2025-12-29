@@ -74,7 +74,6 @@ def create_text_message(sender_id: int, channel_id: int, message_body: str):
         if channel:
             owner_id = channel.property.user_id
             receiver_id = channel.tenant_id if channel.tenant_id != sender_id else owner_id
-            print(receiver_id)
             if msg:
                 socketio.emit('refresh_chat', {'channel_id': channel_id}, room=f"user_{receiver_id}")
 
@@ -204,17 +203,20 @@ def get_user_channels(user_id):
         
         def process_channels(channel_list, role):
             for channel in channel_list:
+
+                last_msg = Message.query.filter_by(channel_id=channel.id)\
+                                        .order_by(Message.sent_at.desc())\
+                                        .first()
+                
+                if not last_msg:
+                    continue
+
                 prop = channel.property
                 
                 if role == "tenant":
                     counterpart = prop.user
                 else:
                     counterpart = channel.tenant
-
-
-                last_msg = Message.query.filter_by(channel_id=channel.id)\
-                                        .order_by(Message.sent_at.desc())\
-                                        .first()
 
                 all_channels.append({
                     "id": channel.id,
@@ -260,7 +262,6 @@ def get_channel_by_lease_id(lease_id):
             return False, "No chat channel associated with this lease", None
 
         channel = lease.channel
-        print("hi")
         
         # Prepare data structure matching initiate_channel for frontend compatibility
         prop = channel.property

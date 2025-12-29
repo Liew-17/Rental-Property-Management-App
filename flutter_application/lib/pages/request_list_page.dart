@@ -57,7 +57,7 @@ class _RequestListPageState extends State<RequestListPage> {
         appBar: AppBar(
           title: const Text(
             "Rent Requests",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.white),
           ),
           centerTitle: true,
           backgroundColor: AppTheme.primaryColor,

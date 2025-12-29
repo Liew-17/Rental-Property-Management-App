@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cross_file/cross_file.dart';
+import 'dart:typed_data';
 
 class XFileUploadWidget extends StatefulWidget {
   final void Function(List<XFile>)? onFilesChanged;
@@ -9,7 +11,7 @@ class XFileUploadWidget extends StatefulWidget {
   const XFileUploadWidget({
     super.key,
     this.onFilesChanged,
-    this.maxFiles = 5, // default fallback
+    this.maxFiles = 5, // default max = 5
   });
 
   @override
@@ -25,33 +27,43 @@ class _XFileUploadWidgetState extends State<XFileUploadWidget> {
       return;
     }
 
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'png', 'pdf'],
-      withData: true,
-    );
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'png', 'pdf'],
+        withData: kIsWeb, 
+      );
 
-    if (result != null) {
-      List<XFile> files = result.files.map((pf) {
-        if (pf.bytes != null) {
-          return XFile.fromData(pf.bytes!, name: pf.name);
-        } else if (pf.path != null) {
-          return XFile(pf.path!);
-        } else {
-          throw Exception("Cannot convert PlatformFile to XFile");
+      if (result != null) {
+        List<XFile> files = result.files.map((pf) {
+          if (kIsWeb) {
+            return XFile.fromData(pf.bytes!, name: pf.name);
+          } else {
+
+            if (pf.path != null) {
+              return XFile(pf.path!, name: pf.name);
+            } else {
+              return XFile.fromData(pf.bytes ?? Uint8List(0), name: pf.name);
+            }
+          }
+        }).toList();
+
+        int availableSlots = widget.maxFiles - _selectedFiles.length;
+        if (files.length > availableSlots) {
+          files = files.take(availableSlots).toList();
+          _showLimitWarning();
         }
-      }).toList();
 
-      // Prevent exceeding max
-      int availableSlots = widget.maxFiles - _selectedFiles.length;
-      if (files.length > availableSlots) {
-        files = files.take(availableSlots).toList();
-        _showLimitWarning();
+        setState(() => _selectedFiles.addAll(files));
+        
+        widget.onFilesChanged?.call(_selectedFiles);
       }
-
-      setState(() => _selectedFiles.addAll(files));
-      widget.onFilesChanged?.call(_selectedFiles);
+    } catch (e) {
+      print("Error picking files: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error picking files: $e")),
+      );
     }
   }
 
@@ -60,7 +72,7 @@ class _XFileUploadWidgetState extends State<XFileUploadWidget> {
     widget.onFilesChanged?.call(_selectedFiles);
   }
 
-  // Reusable popup
+
   void _showLimitWarning() {
     showDialog(
       context: context,
@@ -89,7 +101,6 @@ class _XFileUploadWidgetState extends State<XFileUploadWidget> {
         ),
         const SizedBox(height: 10),
 
-        // File list UI
         ..._selectedFiles.asMap().entries.map((entry) {
           int index = entry.key;
           XFile file = entry.value;

@@ -20,7 +20,7 @@ class OwnedPropertyCard extends StatelessWidget {
     return PropertyCardBase(
       property: property,
       // Show delete only if not actively rented/listed to prevent accidents
-      showDelete: property.status == "unlisted" || property.status == "pending",
+      showDelete: property.status == "unlisted",
       onView: onView,
       onDelete: onDelete,
     );

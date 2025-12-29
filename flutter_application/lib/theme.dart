@@ -9,12 +9,7 @@ class AppTheme {
   static const Color accentColor = Colors.blueAccent;
   static const Color favoritedColor = Color.fromARGB(255, 255, 0, 111);
 
-  // Text styles
-  static TextStyle heading1 = GoogleFonts.inter(
-    fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: secondaryColor,
-  );
+
 
   static TextStyle bodyText = GoogleFonts.inter(
     fontSize: 16,

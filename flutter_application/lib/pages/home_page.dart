@@ -19,26 +19,40 @@ class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
   List<Residence> nearByResidences = [];
   int currentPage = 1;
-  int totalPages = 1; // Update this after API call
+  int totalPages = 1; 
   final int pageSize = 10;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPage(currentPage);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   Future<void> _loadPage(int page) async {
+    if (_isLoading) return;
 
-    if (_scrollController.hasClients) { // safe check
-    _scrollController.jumpTo(0);
+    setState(() => _isLoading = true);
+
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
     } 
 
     List<Residence> data = await loadNearbyResidences(page: page);
 
-    if (!mounted) return; // prevent dispose issue
+    if (!mounted) return;
 
     setState(() {
       nearByResidences = data;
       currentPage = page;
+      _isLoading = false;
     });
-
-
-
   }
 
   Future<List<Residence>> loadNearbyResidences({required int page}) async {
@@ -55,144 +69,132 @@ class _HomePageState extends State<HomePage> {
         page: page,
       );
 
-      totalPages = (result.totalCount / pageSize).ceil(); //set total page
+      totalPages = (result.totalCount / pageSize).ceil(); 
 
       return result.residences;
     } catch (e) {
       debugPrint("Failed to load nearby residences: $e");
       totalPages = 0;
-      return []; // return empty list on failure
+      return []; 
     }
   }
 
   @override
-  void initState() {
-    super.initState();
-    _loadPage(currentPage);
-  }
-
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            LocationHeader(
-              onChanged: () {
-                  _loadPage(1); // Reload page when location changed
-              }
-            ),
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Material(
-                color: Colors.grey[200], 
-                borderRadius: BorderRadius.circular(8),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  splashColor: Colors.grey.withValues(alpha: 0.3), // Ripple color
-                  highlightColor: Colors.grey.withValues(alpha: 0.1), // Press color
-                  onTap: () {
-                    Navigator.pushNamed(context, '/search');
-                  },
-                  child: AbsorbPointer(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 16,),
+                LocationHeader(
+                  onChanged: () {
+                      _loadPage(1); 
+                  }
+                ),
+                
+                // Search Bar
+                Padding(
+                  
+                  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                  child: Material(
+                    color: Colors.grey[200], 
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      splashColor: Colors.grey.withOpacity(0.3),
+                      highlightColor: Colors.grey.withOpacity(0.1),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/search');
+                      },
+                      child: AbsorbPointer(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
 
-            // Residence card
-            for (var residence in nearByResidences) ...[
-              ResidenceCard(
-                residence: residence,
-                onTap: (id) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          PropertyDetailPage(propertyId: id,viewOnly: false),
-                    ),
-                  );
-                },
-                onFavoriteToggle: (newValue) {
-                  setState(() {
-                    residence.isFavourited = newValue;
-                    UserService.toggleFavourite(  
-                      residence.id  
-                    );
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
+                for (var residence in nearByResidences) ...[
+                  ResidenceCard(
+                    residence: residence,
+                    onTap: (id) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              PropertyDetailPage(propertyId: id, viewOnly: false),
+                        ),
+                      );
+                    },
+                    onFavoriteToggle: (newValue) {
+                      setState(() {
+                        residence.isFavourited = newValue;
+                        UserService.toggleFavourite(residence.id);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
-            const SizedBox(height: 20),
+                if (totalPages > 1) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton.icon(
+                        onPressed: currentPage > 1
+                            ? () => _loadPage(currentPage - 1)
+                            : null,
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text("Prev"),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          disabledForegroundColor: Colors.grey[300],
+                        ),
+                      ),
 
-            // Page control
+                      const SizedBox(width: 12),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Prev button
-                TextButton.icon(
-                  onPressed: currentPage > 1
-                      ? () => _loadPage(currentPage - 1)
-                      : null,
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text("Prev"),
-                  style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,  
-                  )
-                ),
+                      Text(
+                        "Page $currentPage of $totalPages",
+                        style: const TextStyle(fontSize: 16),
+                      ),
 
-                const SizedBox(width: 12),
+                      const SizedBox(width: 12),
 
-                // Page number display
-                Text(
-                  "Page $currentPage of $totalPages",
-                  style: const TextStyle(fontSize: 16),
-                ),
+                      TextButton.icon(
+                        onPressed: currentPage < totalPages
+                            ? () => _loadPage(currentPage + 1)
+                            : null,
+                        icon: const Icon(Icons.arrow_forward),
+                        label: const Text("Next"),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          disabledForegroundColor: Colors.grey[300],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
-                const SizedBox(width: 12),
-
-                // Next button
-                TextButton.icon(
-                  onPressed: currentPage != totalPages
-                      ? () => _loadPage(currentPage + 1)
-                      : null,
-                  icon: const Icon(Icons.arrow_forward),
-                  label: const Text("Next"),
-                  style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,  
-                  )
-                ),
+                const SizedBox(height: 30),
               ],
             ),
-
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }

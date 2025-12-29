@@ -30,15 +30,21 @@ class _ChannelListPageState extends State<ChannelListPage> with SingleTickerProv
     _loadData();
 
     SocketService.onEvent('refresh_chat', (data) {
-        _loadData(); 
+        if (mounted) {
+          _loadData();
+        }
     });
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
+
     setState(() => _isLoading = true);
+
     final userId = AppUser().id;
     if (userId != null) {
       final data = await ChatService.getUserChannels();
+      
       if (mounted) {
         setState(() {
           _allChannels = data;

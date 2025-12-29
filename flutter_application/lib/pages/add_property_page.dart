@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_application/custom_widgets/image_picker_btn.dart';
 import 'package:flutter_application/custom_widgets/location_picker.dart';
 import 'package:flutter_application/custom_widgets/residence_type_picker.dart';
 import 'package:flutter_application/custom_widgets/section.dart';
@@ -35,18 +36,7 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
   String? _selectedResidenceType;
 
   XFile? _thumbnail;
-  final picker = ImagePicker();
 
-  Future<void> _pickThumbnail() async {
-    try {
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        setState(() => _thumbnail = pickedFile);
-      }
-    } catch (e) {
-      debugPrint("Thumbnail pick error: $e");
-    }
-  }
 
   Future<void> _submit() async {
     if (_nameController.text.isEmpty) {
@@ -109,6 +99,7 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
           "New Property",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+        foregroundColor: Colors.white,
         centerTitle: true,
         backgroundColor: AppTheme.primaryColor,
       ),
@@ -148,7 +139,7 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
                     right: 24,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .8), // Transparent white background
+                        color: Colors.white.withValues(alpha: .8),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -158,9 +149,11 @@ class _AddPropertyPageState extends State<AddPropertyPage> {
                           ),
                         ],
                       ),
-                      child: IconButton(
+                      child: ImagePickerButton(
                         icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
-                        onPressed: _pickThumbnail,
+                        onImageSelected: (XFile file) {
+                          setState(() => _thumbnail = file);
+                        },
                       ),
                     ),
                   ),

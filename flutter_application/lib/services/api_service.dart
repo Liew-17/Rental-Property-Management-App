@@ -1,5 +1,8 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
 class ApiService {
-  static const String _baseUrl = "http://192.168.0.19:5000";
+  
+  static String _baseUrl = "http://192.168.0.19:5000";
 
   static String getApiAddress() => _baseUrl;
 
@@ -31,5 +34,20 @@ class ApiService {
 
 
   static String buildImageUrl(String filePath) => buildFileUrl(filePath);
+
+static Future<void> updateBaseUrl(String newIp) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    String finalUrl = newIp.startsWith("http") ? newIp : "http://$newIp:5000";
+    
+    _baseUrl = finalUrl;
+    
+    await prefs.setString('api_url', finalUrl);
+  }
+
+  static Future<void> loadUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    _baseUrl = prefs.getString('api_url') ?? _baseUrl;
+  }
 
 }

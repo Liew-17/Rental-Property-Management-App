@@ -45,7 +45,8 @@ class _RequestPageState extends State<RequestPage> {
     _loadRequest();
 
     SocketService.onEvent('refresh_request', (data) {
-      debugPrint("Received refresh event: $data");
+      // debugPrint("Received refresh event: $data");
+      if (!mounted) return;
       if (data['request_id'] == request?.id) {
         _loadRequest(); 
       }
@@ -62,6 +63,7 @@ class _RequestPageState extends State<RequestPage> {
   Future<void> _loadRequest() async {
     try {
       final fetchedRequest = await RentService.getRentRequest(widget.requestId);
+      if (!mounted) return;
 
       if (fetchedRequest != null) {
         // Determine "Other Party" to display
@@ -395,7 +397,7 @@ class _RequestPageState extends State<RequestPage> {
   }
 
   Widget _buildStatusMessage() {
-    bool isRejected = request!.status == 'rejected';
+    bool isRejected = request!.status == 'rejected'|| request!.status == 'terminated';
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -407,7 +409,7 @@ class _RequestPageState extends State<RequestPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            "Request ${request!.status.toUpperCase()}",
+            "request ${request!.status}",
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
@@ -645,8 +647,7 @@ Widget _step4() {
                 _kvRow("Deposit", "RM ${priceDetails!.deposit}"),
                 const Divider(height: 24),
                 _kvRow("Total Due", "RM ${priceDetails!.price + priceDetails!.deposit}", isBold: true),
-                
-                // --- NEW: Pay Before Date Message ---
+             
                 if (request!.firstPaymentDue != null) ...[
                   const SizedBox(height: 16),
                   Container(

@@ -80,6 +80,22 @@ def get_user_info(id):
         }
     }), 200
 
+@user_bp.route("/update_role", methods=["PUT"])
+def update_role():
+    data = request.json
+    user_id = data.get("user_id")
+    role = data.get("role")
+
+    if not user_id or not role:
+        return jsonify({"success": False, "message": "Missing user_id or role"}), 400
+
+    success, message = user_service.update_user_role(user_id, role)
+
+    if success:
+        return jsonify({"success": True, "message": message}), 200
+    else:
+        return jsonify({"success": False, "message": message}), 400
+
 @user_bp.route("/upload_profile_pic", methods=["POST"])
 def upload_profile_pic():
 

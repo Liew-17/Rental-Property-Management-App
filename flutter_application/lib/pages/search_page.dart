@@ -4,6 +4,7 @@ import 'package:flutter_application/models/residence.dart';
 import 'package:flutter_application/services/property_service.dart';
 import 'package:flutter_application/custom_widgets/residence_card.dart';
 import 'package:flutter_application/pages/property_detail_page.dart';
+import 'package:flutter_application/services/user_service.dart';
 import 'package:flutter_application/theme.dart';
 
 class SearchPage extends StatefulWidget {
@@ -183,6 +184,12 @@ class _SearchPageState extends State<SearchPage> {
           child: ResidenceCard(
             residence: _results[index],
             onTap: _onCardTap,
+              onFavoriteToggle: (newValue) {
+                      setState(() {
+                        _results[index].isFavourited = newValue;
+                        UserService.toggleFavourite(_results[index].id);
+                      });
+                    },
           ),
         );
       },

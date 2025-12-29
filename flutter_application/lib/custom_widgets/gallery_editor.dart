@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/custom_widgets/image_picker_btn.dart';
 import 'package:flutter_application/services/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -39,19 +40,15 @@ class _GalleryEditorState extends State<GalleryEditor> {
     });
   }
 
-  Future<void> _handleAdd() async {
-    final XFile? picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => _isLoading = true); // start loading
-      try {
-        await widget.uploadImage(picked); 
-        await Future.delayed(Duration(milliseconds: 500));
-        await _refreshGallery();           
-      } catch (e, stack) {
-        debugPrint("Failed to add image: $e");
-        debugPrintStack(stackTrace: stack);
-        setState(() => _isLoading = false); // stop loading
-      }
+  Future<void> _handleAdd(XFile picked) async {
+    setState(() => _isLoading = true); 
+    try {
+      await widget.uploadImage(picked); 
+      await _refreshGallery();           
+    } catch (e, stack) {
+      debugPrint("Failed to add image: $e");
+      debugPrintStack(stackTrace: stack);
+      setState(() => _isLoading = false); 
     }
   }
 
@@ -107,9 +104,10 @@ class _GalleryEditorState extends State<GalleryEditor> {
                 ],
               ),
             ),
-            GestureDetector(
-              onTap: _handleAdd,   
-              child: Container(
+           ImagePickerButton(
+              onImageSelected: (XFile file) => _handleAdd(file),
+
+              icon: Container(
                 width: 100,
                 height: 100,
                 color: Colors.grey[300],

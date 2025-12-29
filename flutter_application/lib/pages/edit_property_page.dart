@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application/custom_widgets/feature_editor.dart';
 import 'package:flutter_application/custom_widgets/gallery_editor.dart';
+import 'package:flutter_application/custom_widgets/image_picker_btn.dart';
 import 'package:flutter_application/custom_widgets/location_picker.dart';
 import 'package:flutter_application/custom_widgets/residence_type_picker.dart';
 import 'package:flutter_application/custom_widgets/section.dart';
@@ -42,7 +43,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
   final _bathroomCtrl = TextEditingController();
   final _landCtrl = TextEditingController();
   final _rulesCtrl = TextEditingController();
-  final picker = ImagePicker();
+
   
   XFile? _thumbnail;
   String? _thumbnailUrl;
@@ -143,15 +144,6 @@ class _EditPropertyPageState extends State<EditPropertyPage>
       if(mounted){
         Navigator.pop(context, true);
       }
-    }
-  }
-
-  Future<void> _pickThumbnail() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _thumbnail = pickedFile;
-      });
     }
   }
 
@@ -256,9 +248,11 @@ class _EditPropertyPageState extends State<EditPropertyPage>
                           ),
                         ],
                       ),
-                      child: IconButton(
+                      child: ImagePickerButton(
                         icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
-                        onPressed: _pickThumbnail,
+                        onImageSelected: (XFile file) {
+                          setState(() => _thumbnail = file);
+                        },
                       ),
                     ),
                   ),
@@ -438,7 +432,7 @@ class _EditPropertyPageState extends State<EditPropertyPage>
                 },
 
                 uploadImage: (file) async {
-                  PropertyService.addGalleryImage(propertyId: widget.propertyId, galleryImage: file);
+                  await PropertyService.addGalleryImage(propertyId: widget.propertyId, galleryImage: file);
                   
                 },
 

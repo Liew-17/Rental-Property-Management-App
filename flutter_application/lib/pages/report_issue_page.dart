@@ -127,7 +127,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
               section(
                 "Priority Level",
                 DropdownButtonFormField<String>(
-                  value: _priority,
+                  initialValue: _priority,
                   decoration: const InputDecoration(
                     labelText: "Select Priority",
                     border: OutlineInputBorder(),
@@ -142,7 +142,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
                 ),
               ),
 
-              // Section 3: Attachments
               section(
                 "Attachments",
                 Column(

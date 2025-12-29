@@ -1,6 +1,7 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:flutter/foundation.dart'; 
 import 'package:flutter/material.dart';
+import 'package:flutter_application/custom_widgets/image_picker_btn.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application/services/furniture_service.dart';
@@ -22,17 +23,15 @@ class AddFurnitureLogPage extends StatefulWidget {
 }
 
 class _AddFurnitureLogPageState extends State<AddFurnitureLogPage> {
-  // Controllers
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
-  
-  // State
+
   String _selectedType = "Maintenance";
   DateTime _selectedDate = DateTime.now();
   XFile? _image;
   bool _isSubmitting = false;
 
-  final ImagePicker _picker = ImagePicker();
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -40,20 +39,8 @@ class _AddFurnitureLogPageState extends State<AddFurnitureLogPage> {
     super.initState();
     _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDate);
     
-    // Smart Default: If item is broken, user likely wants to Repair or Dispose it
     if (widget.currentStatus == 'Damaged') {
       _selectedType = "Repair";
-    }
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        setState(() => _image = pickedFile);
-      }
-    } catch (e) {
-      debugPrint("Image pick error: $e");
     }
   }
 
@@ -176,26 +163,30 @@ class _AddFurnitureLogPageState extends State<AddFurnitureLogPage> {
                       ),
                     ),
                     Positioned(
-                    bottom: 8,
-                    right: 24,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .8), // Transparent white background
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: .1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
-                        onPressed: _pickImage,
+                      bottom: 8,
+                      right: 24,
+                      child: Container(
+                        decoration: BoxDecoration(
+                    
+                          color: Colors.white.withValues(alpha: .8),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: .1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+
+                        child: ImagePickerButton(
+                          icon: const Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
+                          onImageSelected: (XFile file) {
+                            setState(() => _image = file);
+                          },
+                        ),
                       ),
                     ),
-                  ),
                   ],
                 ),
               ),

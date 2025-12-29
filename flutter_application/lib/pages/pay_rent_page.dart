@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_application/custom_widgets/file_preview_page.dart';
 import 'package:flutter_application/pages/tenant_record_page.dart'; // Import for View Records
 import 'package:flutter_application/services/rent_service.dart';
 import 'package:intl/intl.dart';
@@ -76,6 +77,24 @@ class _PayRentPageState extends State<PayRentPage> {
     }
   }
 
+void _onViewContract() {
+  if (_lease != null && _lease!.contractUrl != null && _lease!.contractUrl!.isNotEmpty) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FilePreviewPage(
+          fileUrl: _lease!.contractUrl!,
+          fileName: _lease!.contractName ?? "Contract",
+        ),
+      ),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("No contract file available for this lease.")),
+    );
+  }
+}
+
 Future<void> _handlePayment() async {
     // Ensure we have a valid record and lease before proceeding
     if (_currentDueRecord == null || _lease == null) return;
@@ -148,7 +167,7 @@ Future<void> _handlePayment() async {
         };
       case 'unpaid':
       default:
-        return {
+        return { 
           'text': 'UNPAID',
           'color': Colors.orange,
           'icon': Icons.access_time_filled
@@ -194,6 +213,7 @@ Future<void> _handlePayment() async {
     final statusText = style['text'];
     final statusColor = style['color'];
     final statusIcon = style['icon'];
+ 
     final monthText = record.month;
 
     final String dateLabel1 = "Bill Date";
@@ -201,7 +221,7 @@ Future<void> _handlePayment() async {
     final String dateLabel2 = "Due Date";
     final String dateValue2 = _formatDate(record.dueDate);
     
-    // Check if this record is already paid
+    // check if this record is already paid
     final bool isPaid = record.status.toLowerCase() == 'paid';
 
     return Card(
@@ -211,7 +231,7 @@ Future<void> _handlePayment() async {
       surfaceTintColor: Colors.white,
       child: Stack(
         children: [
-          // --- Main Content ---
+
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
             child: Column(
@@ -272,6 +292,22 @@ Future<void> _handlePayment() async {
                 // Actions
                 Row(
                   children: [
+
+                    Expanded(
+                      flex: 1,
+                      child: OutlinedButton.icon(
+                        onPressed: _onViewContract,
+                        icon: const Icon(Icons.description_outlined),
+                        label: const Text("Contract"),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                    
+                        
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _onViewRecords,
@@ -291,7 +327,7 @@ Future<void> _handlePayment() async {
                             : _handlePayment,
                         style: AppTheme.primaryButton.copyWith(
                           padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 12)),
-                          // Optional: Change look when disabled
+                
                           backgroundColor: isPaid 
                               ? WidgetStateProperty.all(Colors.grey[300]) 
                               : null,
@@ -312,7 +348,6 @@ Future<void> _handlePayment() async {
             ),
           ),
 
-          // --- Status Badge (Top Right) ---
           Positioned(
             top: 16,
             right: 16,
