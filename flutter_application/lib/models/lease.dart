@@ -48,7 +48,7 @@ class Lease {
       contractName: json['contract_name'],
       tenantId: json['tenant_id'],
       tenantName: json['tenant_name'], 
-      tenantProfile: json['tenant_profile'], 
+      tenantProfile: json['tenant_profile_pic_url'], 
     );
   }
 }

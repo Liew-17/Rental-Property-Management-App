@@ -659,19 +659,19 @@ class _RentRequestDialogState extends State<RentRequestDialog> {
             Row(
               children: [
                 const Text("Duration (Months)", style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 IconButton(
                   icon: const Icon(Icons.remove),
                   onPressed: () {
                     if (_duration > 1) setState(() => _duration--);
                   },
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
                 Text(
                   "$_duration",
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: () => setState(() => _duration++),

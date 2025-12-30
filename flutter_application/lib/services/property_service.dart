@@ -436,7 +436,7 @@ class PropertyService {
  static Future<List<Lease>> getAllLeases(int propertyId) async {
     final uri = ApiService.buildUri("/property/get_lease/$propertyId/0"); // 0 = fetch all (not included terminated leases)
 
-    try {
+    try { 
       final response = await http.get(uri);
       final jsonData = jsonDecode(response.body);
 

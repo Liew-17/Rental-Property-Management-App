@@ -269,7 +269,7 @@ def get_lease_route(property_id, active_only):
     active_only_flag = bool(active_only)
 
     success, result = property_service.get_lease(property_id, active_only_flag)
-
+ 
     if not success:
         return jsonify({
             "success": False,

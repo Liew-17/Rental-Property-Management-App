@@ -44,7 +44,7 @@ class _LeasePageState extends State<LeasePage> {
           l.status.toLowerCase() == 'active'
       ).toList();
       
-      final past = leases.where((l) => 
+      final past = leases.where((l) =>  
           l.status.toLowerCase() != 'active' && 
           l.status.toLowerCase() != 'terminated' && 
           l.status.toLowerCase() != 'pending'
@@ -545,19 +545,19 @@ Widget _buildActiveLeaseCard(Lease lease) {
               children: [
                 TextButton.icon(
                   onPressed: () => _onChatHistory(lease),
-                  icon: const Icon(Icons.chat, size: 16, color: Colors.grey),
+                  icon: const Icon(Icons.chat, size: 14, color: Colors.grey),
                   label: Text("Chat Log", style: TextStyle(color: Colors.grey[700])),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 2),
                 TextButton.icon(
                   onPressed: () => _onViewContract(lease.contractUrl??"", lease.contractName??""),
-                  icon: const Icon(Icons.description_outlined, size: 16, color: Colors.grey),
+                  icon: const Icon(Icons.description_outlined, size: 14, color: Colors.grey),
                   label: Text("Contract", style: TextStyle(color: Colors.grey[700])),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 2),
                 TextButton.icon(
                   onPressed: () => _onViewRecords(lease),
-                  icon: const Icon(Icons.history, size: 16, color: AppTheme.primaryColor),
+                  icon: const Icon(Icons.history, size: 14, color: AppTheme.primaryColor),
                   label: const Text("Records", style: TextStyle(color: AppTheme.primaryColor)),
                 ),
               ],

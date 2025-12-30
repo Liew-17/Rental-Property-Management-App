@@ -470,6 +470,7 @@ def get_lease(property_id, active_only=True):
         if lease.tenant:
             tenant_name = lease.tenant.username
             tenant_profile_pic_url = lease.tenant.profile_pic_url
+            print(tenant_profile_pic_url)
             
 
         data.append({
