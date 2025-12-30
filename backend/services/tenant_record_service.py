@@ -23,7 +23,6 @@ def generate_next_tenant_record(lease_id, force_generate=False):
     # Generate next start date based on initial lease start date
     next_start_date = lease.start_date + relativedelta(months=record_count)
     next_month_str = next_start_date.strftime("%Y-%m")
-
     # Stop if beyond lease end date (unless forced)
     if lease.end_date and next_start_date >= lease.end_date and not force_generate:
         return None
@@ -33,10 +32,9 @@ def generate_next_tenant_record(lease_id, force_generate=False):
 
     today = datetime.now(timezone.utc).date()
 
-  
-
     # Generate only if cycle has started or forced
     if next_start_date <= today or force_generate:
+
         return TenantRecord.create(
             lease_id=lease.id,
             month=next_month_str,
@@ -58,6 +56,7 @@ def process_daily_tasks():
         # Fetch all active leases
         active_leases = Lease.query.filter_by(status='active').all()
         today = datetime.now(timezone.utc).date()
+        print(today)
 
         for lease in active_leases:
 
