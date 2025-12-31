@@ -240,7 +240,7 @@ class _FurnitureDetailPageState extends State<FurnitureDetailPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // 1. Main Info Card (No Stack, Image inside)
+
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -367,7 +367,7 @@ class _FurnitureDetailPageState extends State<FurnitureDetailPage> {
 
             const SizedBox(height: 24),
 
-            // 2. Activity History Header
+     
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
@@ -390,7 +390,7 @@ class _FurnitureDetailPageState extends State<FurnitureDetailPage> {
             ),
             const SizedBox(height: 12),
 
-            // 3. Log List
+      
             if (_furniture!.logs.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 40),
