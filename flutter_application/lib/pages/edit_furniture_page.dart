@@ -89,10 +89,9 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Furniture deleted successfully")),
           );
-          // Pop twice: once to close Edit, once to close Detail, returning to List
-          // Or ensure your navigation stack handles this. Here we pop to list.
-          Navigator.pop(context); // Close Edit Page
-          Navigator.pop(context, true); // Close Detail Page and trigger refresh on List
+   
+          Navigator.pop(context); 
+          Navigator.pop(context, true); 
         }
       } else {
         if (mounted) {
@@ -182,7 +181,7 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image Picker
-// Image Picker (Updated to match AddFurnitureLogPage)
+
             Center(
               child: Stack(
                 children: [
@@ -198,7 +197,7 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
                         image: displayImage != null
                             ? DecorationImage(
                                 image: displayImage,
-                                fit: BoxFit.cover, // Changed to cover to match other pages
+                                fit: BoxFit.cover, 
                               )
                             : null,
                       ),
@@ -212,7 +211,7 @@ class _EditFurniturePageState extends State<EditFurniturePage> {
                     right: 24,
                     child: Container(
                       decoration: BoxDecoration(
-                        // ... keep your existing decoration ...
+             
                         color: Colors.white.withValues(alpha: .8),
                         shape: BoxShape.circle,
                         boxShadow: [

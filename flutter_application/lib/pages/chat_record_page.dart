@@ -236,7 +236,7 @@ class _ChatRecordPageState extends State<ChatRecordPage> {
     );
   }
 
-  // --- 4. Message Builders (Same as original) ---
+
   Widget _buildMessage(Message msg) {
     bool isMe = msg.senderId == _currentUserId;
 

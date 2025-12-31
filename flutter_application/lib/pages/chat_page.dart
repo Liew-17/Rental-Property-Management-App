@@ -15,13 +15,12 @@ import 'package:flutter_application/services/chat_service.dart';
 class ChatPage extends StatefulWidget {
   final int propertyId;
   final int tenantId;
-  final String? channelType; // 1. Add this parameter
-
+  final String? channelType; 
   const ChatPage({
     super.key,
     required this.propertyId,
     required this.tenantId,
-    this.channelType, // 2. Add to constructor
+    this.channelType, 
   });
 
   @override
@@ -29,12 +28,11 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  // Chat State
+
   Channel? _channel;
   List<Message> messages = [];
   bool _isLoadingChannel = true;
-  
-  // UI Controllers
+
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   bool _showScrollToBottom = false;
@@ -94,7 +92,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // --- 2. Message Loading ---
   Future<void> _loadInitialMessages() async {
     if (_channel == null) return;
     try {
@@ -178,7 +175,7 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // --- 3. Sending Messages ---
+
   Future<void> _sendTextMessage() async {
     if (_channel == null) return;
     final text = _textController.text.trim();
@@ -216,7 +213,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // --- 4. Custom Header Builders ---
   PreferredSizeWidget _buildAppBar() {
     if (_isLoadingChannel || _channel == null) {
       return AppBar(
@@ -226,10 +222,8 @@ class _ChatPageState extends State<ChatPage> {
       );
     }
 
-    // Determine Logic: Am I the Owner or Tenant?
     final bool isMeOwner = _currentUserId == _channel!.ownerId;
-    
-    // Display the "Opposite" person
+
     final String displayName = isMeOwner ? _channel!.tenantName : _channel!.ownerName;
     final String? displayProfile = isMeOwner ? _channel!.tenantProfile : _channel!.ownerProfile;
     final String roleLabel = isMeOwner ? "Tenant" : "Owner";
@@ -244,7 +238,7 @@ class _ChatPageState extends State<ChatPage> {
       titleSpacing: 0,
       title: Row(
         children: [
-          // Profile Pic
+
           CircleAvatar(
             radius: 20,
             backgroundColor: Colors.grey[200],
@@ -257,7 +251,7 @@ class _ChatPageState extends State<ChatPage> {
           ),
           const SizedBox(width: 12),
           
-          // Info Column
+ 
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,7 +270,7 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Role Badge
+              
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
@@ -308,7 +302,7 @@ class _ChatPageState extends State<ChatPage> {
       ),
       actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.black), // Three-dot icon
+            icon: const Icon(Icons.more_vert, color: Colors.black),
             onSelected: (value) {
               if (value == 'view_info') {
                  Navigator.push(
@@ -332,7 +326,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // --- 5. Message Builders ---
   Widget _buildMessage(Message msg) {
     bool isMe = msg.senderId == _currentUserId;
 
@@ -342,7 +335,7 @@ class _ChatPageState extends State<ChatPage> {
       case "image":
         return _buildImageBubble(msg, isMe);
       default:
-        return const SizedBox.shrink(); // Ignore system for now or implement similarly
+        return const SizedBox.shrink(); 
     }
   }
 
@@ -414,7 +407,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // --- 6. Main Build ---
+
   @override
   Widget build(BuildContext context) {
     if (_isLoadingChannel) {
@@ -506,10 +499,10 @@ class _ChatPageState extends State<ChatPage> {
           ],
         ),
       ),
-      // Scroll to bottom FAB
+ 
       floatingActionButton: _showScrollToBottom
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 70), // Push up above input
+              padding: const EdgeInsets.only(bottom: 70), 
               child: SizedBox(
                 height: 40,
                 width: 40,
