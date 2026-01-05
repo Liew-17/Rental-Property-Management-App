@@ -5,82 +5,94 @@
 
 ---
 
-## Overview
+## 📖 Overview
 
-This project is a **mobile application for rental property management**, designed to help landlords and property managers efficiently handle rental properties, tenants, and automated tasks. The system includes:
+This project is a comprehensive mobile application designed to streamline rental property management. It empowers landlords and property managers to efficiently handle rental properties, manage tenant relationships, and execute automated administrative tasks.
 
-- Backend server  
-- Flutter-based frontend app  
-- AI module for predictive analytics  
+The system is built on a robust architecture comprising a Python-based backend, a Flutter mobile frontend, and an integrated AI module for predictive analytics.
 
----
+## 📂 System Structure
 
-## System Structure
+The project is organized into three primary directories:
 
-The project has three main directories:
-
-1. **Backend**: Server-side code for requests, database operations, and automated tasks.  
-2. **Flutter Application**: Mobile app frontend built with Flutter.  
-3. **AI_Training**: Code for data collection, cleaning, and AI model training.  
+| Component | Directory | Description |
+| :--- | :--- | :--- |
+| **Backend** | `/backend` | Server-side code handling API requests, database operations, and automated scheduled tasks. |
+| **Frontend** | `/flutter_application` | The mobile user interface built with the Flutter framework. |
+| **AI Module** | `/AI_Training` | Scripts for data collection, cleaning, and training the predictive AI models. |
 
 ---
 
-## Prerequisites
+## ⚙️ Prerequisites
 
-- Python 3.x  
-- Flutter SDK  
-- Required Python packages (install via `pip install -r requirements.txt`)  
-- A connected device or emulator for Flutter  
+Before running the system, ensure you have the following installed:
+
+* **Python 3.x**
+* **Flutter SDK**
+* **Connected Device:** An Android/iOS emulator or a physical device connected via USB.
 
 ---
 
-## Execution Steps
+## 🚀 Installation & Execution
 
-### 1. Run Backend
+### 1. Backend Setup
+The backend handles database logic and background automation.
 
-Navigate to the `backend` directory and start the server:
+1.  Navigate to the backend directory:
+    ```bash
+    cd backend
+    ```
+2.  Install required dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+3.  Start the server:
+    ```bash
+    python app.py
+    ```
 
-```bash
-python app.py
-```
+> **Note:** The backend server is configured to update automatically every **10 seconds** to handle automated tasks.
 
+### 2. Frontend Setup
+1.  Open a new terminal and navigate to the application directory:
+    ```bash
+    cd flutter_application
+    ```
+2.  Launch the application:
+    ```bash
+    flutter run
+    ```
 
-Note: The backend server updates automatically every 10 seconds to handle automated tasks.
+---
 
-2. Run Frontend
-Navigate to the flutter_application directory and run the Flutter app:
+## 🔌 Configuration & Connection
 
-```bash
-flutter run
-```
+To ensure the Flutter frontend communicates correctly with the Python backend:
 
-3. Configure Server Connection
-To ensure the frontend connects successfully:
+### Standard Configuration
+1.  Open the API service file:
+    `flutter_application/lib/services/api_service.dart`
+2.  Locate the `baseURL` variable.
+3.  Update it to match your local backend server address (e.g., `http://192.168.x.x:5000` or `http://10.0.2.2:5000` for Android emulators).
 
-Open:
+### Debugging Connection
+If you are testing on different networks or need to switch hosts quickly:
+* On the **Login Page**, tap the **Settings Icon**.
+* Manually input your server address.
+* *⚠️ **Warning:** This feature is strictly for debugging purposes and is not part of the system’s standard user flow.*
 
-text
-Copy code
-flutter_application/lib/services/api_service.dart
-Update the baseURL to match your backend server address.
+---
 
-Debug Option: On the login page, press the settings icon to manually input your server address.
-⚠️ This is only for debugging purposes and not part of the system’s intended functionality.
+## 🧠 AI Model Training
 
-4. AI Model Training
-The ai_training folder contains scripts for:
+The `/AI_Training` folder contains the logic for the system's predictive capabilities. It includes scripts for:
+1.  **Data Collection:** Gathering historical rental data.
+2.  **Data Cleaning:** Pre-processing data for accuracy.
+3.  **Model Training:** Generating the AI models used by the backend.
 
-Data collection
+---
 
-Data cleaning
+## 📝 Important Notes
 
-Training AI prediction models
-
-Notes
-Backend updates automatically every 10 seconds.
-
-Ensure backend is running before launching the frontend app.
-
-Author
-Name: Liew Yi Qi
-Student ID: B230107B
+* **Backend Uptime:** Ensure the backend (`app.py`) is running and active *before* launching the mobile app to avoid connection errors.
+* **Automation:** The system relies on the backend's 10-second interval checks for automated tasks; do not terminate the terminal running `app.py` while testing these features.
