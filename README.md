@@ -7,7 +7,7 @@
 
 ## 📖 Overview
 
-This project is a comprehensive mobile application designed to streamline rental property management. It empowers landlords and property managers to efficiently handle rental properties, manage tenant relationships, and execute automated administrative tasks.
+This project is a comprehensive mobile application designed to streamline rental property management. It empowers owner to efficiently handle rental properties, manage tenant relationships, and provide AI-based rental price suggestion.
 
 The system is built on a robust architecture comprising a Python-based backend, a Flutter mobile frontend, and an integrated AI module for predictive analytics.
 
