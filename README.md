@@ -19,7 +19,7 @@ The project is organized into three primary directories:
 | :--- | :--- | :--- |
 | **Backend** | `/backend` | Server-side code handling API requests, database operations, and automated scheduled tasks. |
 | **Frontend** | `/flutter_application` | The mobile user interface built with the Flutter framework. |
-| **AI Module** | `/AI_Training` | Scripts for data collection, cleaning, and training the predictive AI models. |
+| **AI Module** | `/ai_training` | Scripts for data collection, cleaning, and training the predictive AI models. |
 
 ---
 
