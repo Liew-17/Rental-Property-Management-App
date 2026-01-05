@@ -69,6 +69,9 @@ The backend handles database logic and background automation.
 
 To ensure the Flutter frontend communicates correctly with the Python backend:
 
+### ⚠️ Network Requirement (Critical)
+**If you are using different devices for the frontend (mobile app) and backend (server), they MUST be connected to the same Wi-Fi network.** Since this is a local server (not public), the mobile app cannot reach your server device if the phone is using mobile data (4G/5G) or a different Wi-Fi network.
+
 ### Standard Configuration
 1.  Open the API service file:
     `flutter_application/lib/services/api_service.dart`
@@ -80,6 +83,7 @@ If you are testing on different networks or need to switch hosts quickly:
 * On the **Login Page**, tap the **Settings Icon**.
 * Manually input your server address.
 * *⚠️ **Warning:** This feature is strictly for debugging purposes and is not part of the system’s standard user flow.*
+
 
 ---
 
