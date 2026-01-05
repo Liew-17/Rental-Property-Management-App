@@ -51,7 +51,7 @@ The backend handles database logic and background automation.
     python app.py
     ```
 
-> **Note:** The backend server is configured to update automatically every **10 seconds** to handle automated tasks.
+> **Note:** The backend server is configured to update automatically every **10 seconds** to handle automated tasks for demonstration purposes. In a real-world production environment, this interval would typically be adjusted to run daily.
 
 ### 2. Frontend Setup
 1.  Open a new terminal and navigate to the application directory:
